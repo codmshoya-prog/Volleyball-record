@@ -188,6 +188,7 @@ body.locked .gate-wrap{display:flex}
       <div class="dd-menu" id="team-manage-menu">
         <button onclick="closeTeamManageDD();changeCode()">코드 변경</button>
         <button onclick="closeTeamManageDD();renameTeam()">이름 변경</button>
+        <button onclick="closeTeamManageDD();openColorModal()">포인트 색상 변경</button>
         <button class="danger" onclick="closeTeamManageDD();deleteTeam()">팀 삭제</button>
       </div>
     </div>
@@ -529,6 +530,23 @@ body.locked .gate-wrap{display:flex}
     <div class="modal-ft"><button class="btn" onclick="closeMo('event')">취소</button><button class="btn btn-p" id="ev-save-btn" onclick="saveEvent()">저장</button></div>
   </div>
 </div>
+<!-- 포인트 색상 변경 모달 -->
+<div class="overlay" id="mo-color">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hd"><span class="modal-title">포인트 색상 변경</span><button class="x-btn" onclick="closeMo('color')">×</button></div>
+    <div class="fg">
+      <div class="fgrp fg-full">
+        <label>우리 팀 포인트 색상</label>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:2px">
+          <input id="color-picker" type="color" value="#185FA5" oninput="gid('color-hex').value=this.value.toUpperCase()" style="width:52px;height:38px;padding:2px;border-radius:8px;border:1px solid var(--border2);cursor:pointer;background:var(--bg2)"/>
+          <input id="color-hex" type="text" placeholder="#185FA5" oninput="syncColorFromHex()" style="flex:1"/>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:8px;line-height:1.5">달력에서 선택한 날짜, 교류전 일정 표시, 리시브 성공률 그래프, 입력창 포커스 색 등에 사용돼요. 다른 팀 화면에는 영향을 주지 않아요.</div>
+      </div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeMo('color')">취소</button><button class="btn btn-p" id="color-save-btn" onclick="saveTeamColor()">저장</button></div>
+  </div>
+</div>
 <script>
 // ============== Supabase 연동 설정 ==============
 const SUPABASE_URL = 'https://rrglljipaothpvswqzkm.supabase.co';
@@ -540,6 +558,8 @@ const TEAM_PARAM = urlParams.get('team') || '';
 let TEAM_ID = null;
 let TEAM_NAME = '';
 let editCode = '';
+let TEAM_COLOR = '#185FA5';
+const DEFAULT_TEAM_COLOR = '#185FA5';
 
 // ── 팀 목록은 더 이상 공개 조회하지 않음: 슬러그+코드를 함께 아는 사람만 팀을 확인/추가할 수 있음 ──
 const MY_TEAMS_KEY='volleyball_my_teams';
@@ -575,6 +595,22 @@ function clearTeamCache(slug){ sessionStorage.removeItem(teamCacheKey(slug)); }
 
 const posColors={'세터':['#EEEDFE','#3C3489'],'아웃사이드 히터':['#E6F1FB','#185FA5'],'미들블로커':['#FAEEDA','#854F0B'],'아포짓 스파이커':['#EAF3DE','#3B6D11'],'리베로':['#FBEAF0','#72243E']};
 const evtCols={training:{bg:'#EAF3DE',text:'#27500A',bar:'#3B6D11',lbl:'훈련'},match:{bg:'#E6F1FB',text:'#0C447C',bar:'#185FA5',lbl:'교류전'},tournament:{bg:'#FCEBEB',text:'#791F1F',bar:'#A32D2D',lbl:'대회'},meeting:{bg:'#FAEEDA',text:'#633806',bar:'#854F0B',lbl:'회의'},other:{bg:'#EEEDFE',text:'#26215C',bar:'#3C3489',lbl:'기타'}};
+// 팀마다 고를 수 있는 포인트 색상: hex -> rgba 변환 후 CSS 변수/차트/일정 색에 반영
+function hexToRgba(hex, alpha){
+  const h = String(hex||'').replace('#','');
+  if(h.length!==6) return `rgba(24,95,165,${alpha})`;
+  const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function applyTeamColor(hex){
+  if(!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) hex = DEFAULT_TEAM_COLOR;
+  TEAM_COLOR = hex.toUpperCase();
+  document.documentElement.style.setProperty('--blue', TEAM_COLOR);
+  document.documentElement.style.setProperty('--blue-bg', hexToRgba(TEAM_COLOR, 0.12));
+  evtCols.match = {bg:hexToRgba(TEAM_COLOR,0.14), text:TEAM_COLOR, bar:TEAM_COLOR, lbl:'교류전'};
+  const activeTab=document.querySelector('.tc.active');
+  if(activeTab && activeTab.id==='tab-calendar') renderCalendar();
+}
 let db={roster:[],training:[],match:[],tournament:[],events:[]};
 let eids={train:null,match:null,tournament:null,roster:null,event:null};
 let calY,calM,selDate;
@@ -613,9 +649,33 @@ async function renameTeam(){
   TEAM_NAME = newName.trim();
   document.title='배구부 데이터 분석 - '+TEAM_NAME;
   gid('team-title').textContent=TEAM_NAME;
-  setTeamCache(TEAM_PARAM, {id:TEAM_ID, name:TEAM_NAME, code:editCode});
+  setTeamCache(TEAM_PARAM, {id:TEAM_ID, name:TEAM_NAME, code:editCode, color:TEAM_COLOR});
   updateMyTeamName(TEAM_ID, TEAM_NAME);
   toast('팀 이름이 변경되었습니다.','success');
+}
+async function openColorModal(){
+  gid('color-picker').value = TEAM_COLOR;
+  gid('color-hex').value = TEAM_COLOR;
+  gid('mo-color').classList.add('open');
+}
+function syncColorFromHex(){
+  const v = gs('color-hex').trim();
+  if(/^#[0-9a-fA-F]{6}$/.test(v)) gid('color-picker').value = v;
+}
+async function saveTeamColor(){
+  let hex = gs('color-hex').trim() || gid('color-picker').value;
+  if(hex && hex[0]!=='#') hex = '#'+hex;
+  if(!/^#[0-9a-fA-F]{6}$/.test(hex)){ toast('색상 형식이 올바르지 않습니다. (예: #185FA5)','error'); return; }
+  const code = prompt('편집 코드를 입력하세요:');
+  if(!code) return;
+  const btn=gid('color-save-btn'); if(btn){btn.textContent='저장 중...';btn.disabled=true;}
+  const {data, error} = await sb.rpc('update_team_color', {p_team_id:TEAM_ID, p_code:code, p_color:hex});
+  if(btn){btn.textContent='저장';btn.disabled=false;}
+  if(error || !data){ toast('색상 변경 실패: '+(error?error.message:'코드가 올바르지 않습니다.'),'error'); return; }
+  applyTeamColor(hex);
+  setTeamCache(TEAM_PARAM, {id:TEAM_ID, name:TEAM_NAME, code:editCode, color:TEAM_COLOR});
+  toast('포인트 색상이 변경되었습니다.','success');
+  closeMo('color');
 }
 async function changeCode(){
   const oldCode = prompt('현재 코드를 입력하세요:');
@@ -626,7 +686,7 @@ async function changeCode(){
   const {data, error} = await sb.rpc('change_team_code',{p_team_id:TEAM_ID, p_old_code:oldCode, p_new_code:newCode});
   if(error || !data){ toast('코드 변경 실패: '+(error?error.message:'현재 코드가 올바르지 않습니다.'),'error'); return; }
   editCode = newCode;
-  setTeamCache(TEAM_PARAM, {id:TEAM_ID, name:TEAM_NAME, code:editCode});
+  setTeamCache(TEAM_PARAM, {id:TEAM_ID, name:TEAM_NAME, code:editCode, color:TEAM_COLOR});
   toast('코드가 변경되었습니다.','success');
 }
 async function deleteTeam(){
@@ -730,7 +790,8 @@ async function submitGateCode(){
   btn.textContent='확인'; btn.disabled=false;
   if(!ok){ errEl.textContent='데이터를 불러오지 못했습니다. 다시 시도해주세요.'; TEAM_ID=null; TEAM_NAME=''; return; }
   editCode = input;
-  setTeamCache(team.slug, {id:TEAM_ID, name:TEAM_NAME, code:editCode});
+  applyTeamColor(team.accent_color);
+  setTeamCache(team.slug, {id:TEAM_ID, name:TEAM_NAME, code:editCode, color:TEAM_COLOR});
   saveMyTeam(TEAM_ID, team.slug, TEAM_NAME);
   document.title='배구부 데이터 분석 - '+TEAM_NAME;
   gid('team-title').textContent=TEAM_NAME;
@@ -750,6 +811,7 @@ async function loadAll(){
   const cache = getTeamCache(TEAM_PARAM);
   if(cache && cache.id && cache.code){
     TEAM_ID = cache.id; TEAM_NAME = cache.name; editCode = cache.code;
+    applyTeamColor(cache.color);
     const ok2 = await fetchAllData(cache.code);
     if(ok2){
       document.title='배구부 데이터 분석 - '+TEAM_NAME;
@@ -922,7 +984,7 @@ function renderOverview(){
     <div class="mc"><div class="ml">${isTrain?'훈련 기록':isTour?'대회 기록':'교류전 기록'}</div><div class="mv">${srcData.length}</div><div class="ms">건</div></div>`;
   if(atkC)atkC.destroy();if(rcvC)rcvC.destroy();
   atkC=new Chart(gid('attackChart'),{type:'line',data:{labels:ml,datasets:[{label:'공격효율(%)',data:ae,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.08)',tension:.3,pointRadius:4,fill:true,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>parseFloat(v).toFixed(1)+'%'}}}}});
-  rcvC=new Chart(gid('receiveChart'),{type:'line',data:{labels:ml,datasets:[{label:'리시브성공률(%)',data:rr,borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,0.08)',tension:.3,pointRadius:4,fill:true,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>parseFloat(v).toFixed(1)+'%'}}}}});
+  rcvC=new Chart(gid('receiveChart'),{type:'line',data:{labels:ml,datasets:[{label:'리시브성공률(%)',data:rr,borderColor:TEAM_COLOR,backgroundColor:hexToRgba(TEAM_COLOR,0.08),tension:.3,pointRadius:4,fill:true,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>parseFloat(v).toFixed(1)+'%'}}}}});
   renderOvRecent();
   refreshOvPlayerSel();
 }
