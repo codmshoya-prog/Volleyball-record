@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>배구부 데이터 분석</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f8f9fa;--bg3:#f1f3f5;
+  --text:#212529;--text2:#6c757d;--text3:#adb5bd;
+  --border:rgba(0,0,0,.10);--border2:rgba(0,0,0,.18);
+  --blue:#185FA5;--blue-bg:#E6F1FB;
+  --green:#3B6D11;--green-bg:#EAF3DE;
+  --amber:#854F0B;--amber-bg:#FAEEDA;
+  --red:#A32D2D;--red-bg:#FCEBEB;
+  --purple:#3C3489;--purple-bg:#EEEDFE;
+  --pink:#72243E;--pink-bg:#FBEAF0;
+  --radius:8px;--radius-lg:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;background:var(--bg3);color:var(--text);font-size:14px}
+.header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:50}
+.header-top{display:flex;align-items:center;gap:12px;padding:14px 0 0}
+.header-top h1{font-size:18px;font-weight:600}
+.back-link{font-size:12px;color:var(--text2);text-decoration:none;padding:4px 8px;border-radius:6px}
+.back-link:hover{background:var(--bg2)}
+.tag{font-size:11px;padding:2px 10px;border-radius:99px;font-weight:500;background:var(--blue-bg);color:var(--blue);cursor:default}
+.tag.lock{cursor:pointer}
+.nav{display:flex;margin-top:10px}
+.nb{padding:9px 16px;font-size:13px;font-weight:400;border:none;background:none;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s}
+.nb:hover{color:var(--text)}
+.nb.active{color:var(--text);border-bottom:2px solid var(--text);font-weight:600}
+.content{max-width:1200px;margin:0 auto;padding:24px 16px 60px}
+.tc{display:none}.tc.active{display:block}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:14px}
+.mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
+.mc{background:var(--bg2);border-radius:var(--radius);padding:14px 16px}
+.ml{font-size:12px;color:var(--text2);margin-bottom:5px}
+.mv{font-size:24px;font-weight:700}
+.ms{font-size:11px;color:var(--text3);margin-top:3px}
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
+thead{background:var(--bg2)}
+th{text-align:left;font-weight:600;font-size:12px;color:var(--text2);padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+th.n,td.n{text-align:right}
+td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--bg2)}
+.btn{padding:8px 16px;font-size:13px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;font-weight:500;transition:all .15s}
+.btn:hover{background:var(--bg2)}
+.btn-p{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn-p:hover{opacity:.85}
+.btn-sm{padding:4px 10px;font-size:12px}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.b-green{background:var(--green-bg);color:var(--green)}
+.b-blue{background:var(--blue-bg);color:var(--blue)}
+.b-amber{background:var(--amber-bg);color:var(--amber)}
+.b-red{background:var(--red-bg);color:var(--red)}
+.b-purple{background:var(--purple-bg);color:var(--purple)}
+.fr{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.fr label{font-size:13px;color:var(--text2)}
+.fr select{font-size:13px;padding:7px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--radius-lg);width:min(620px,100%);max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:700}
+.x-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);line-height:1}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg-full{grid-column:1/-1}
+.fgrp{display:flex;flex-direction:column;gap:5px}
+.fgrp label{font-size:12px;font-weight:600;color:var(--text2)}
+.fgrp input,.fgrp select,.fgrp textarea{font-size:13px;padding:8px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);color:var(--text);width:100%}
+.fgrp input:focus,.fgrp select:focus{outline:2px solid var(--blue);outline-offset:1px}
+.fsec{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;grid-column:1/-1;border-top:1px solid var(--border);padding-top:14px;margin-top:4px}
+.modal-ft{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.player-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.player-row:last-child{border-bottom:none}
+.player-info-block{display:flex;align-items:center;gap:12px}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.player-name{font-size:14px;font-weight:600}
+.player-meta{font-size:12px;color:var(--text2);margin-top:2px}
+.cal-wrap{display:grid;grid-template-columns:1fr 320px;gap:16px}
+@media(max-width:768px){.cal-wrap{grid-template-columns:1fr}}
+.cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.cal-nav button{background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);padding:6px 12px;cursor:pointer;font-size:14px}
+.cal-month-lbl{font-size:16px;font-weight:700;flex:1}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.cal-dow{background:var(--bg2);text-align:center;padding:8px 4px;font-size:11px;font-weight:700;color:var(--text2);border-bottom:1px solid var(--border)}
+.cal-day{background:var(--bg);min-height:80px;padding:6px;cursor:pointer;border-right:1px solid var(--border);border-bottom:1px solid var(--border);transition:background .1s}
+.cal-day:nth-child(7n){border-right:none}
+.cal-day:hover{background:var(--bg2)}
+.cal-day.other{background:var(--bg3)}
+.cal-day.other .dnum{color:var(--text3)}
+.cal-day.today .dnum{background:var(--text);color:var(--bg);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.cal-day.selected{background:var(--blue-bg)}
+.dnum{font-size:12px;font-weight:600;margin-bottom:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.edot{font-size:10px;padding:1px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.e-training{background:var(--green-bg);color:var(--green)}
+.e-match{background:var(--blue-bg);color:var(--blue)}
+.e-tournament{background:var(--red-bg);color:var(--red)}
+.e-meeting{background:var(--amber-bg);color:var(--amber)}
+.e-other{background:var(--purple-bg);color:var(--purple)}
+.evt-item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)}
+.evt-item:last-child{border-bottom:none}
+.evt-bar{width:4px;border-radius:2px;flex-shrink:0;min-height:38px;margin-top:2px}
+.evt-body{flex:1}
+.evt-title{font-size:13px;font-weight:600}
+.evt-meta{font-size:12px;color:var(--text2);margin-top:2px}
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px}
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;color:var(--text2)}
+.spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:10px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;background:#212529;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:slideIn .2s ease}
+.toast.success{background:#2D6A4F}
+.toast.error{background:#A32D2D}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.banner{background:var(--amber-bg);border:1px solid #EF9F27;border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start}
+.banner h3{font-size:14px;font-weight:700;color:var(--amber);margin-bottom:4px}
+.banner p{font-size:13px;color:var(--amber);line-height:1.6}
+.banner code{background:rgba(0,0,0,.08);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:12px}
+.gbtn{padding:5px 14px;font-size:12px;font-weight:600;border-radius:99px;border:1.5px solid var(--border2);background:var(--bg);color:var(--text2);cursor:pointer;transition:all .15s}
+.gbtn:hover{background:var(--bg2)}
+.gbtn.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+#gender-male.active{background:#1a6bb5;border-color:#1a6bb5;color:#fff}
+#gender-female.active{background:#c0392b;border-color:#c0392b;color:#fff}
+.action-btns{display:flex;gap:6px}
+body.locked .header-top .btn,
+body.locked .nav,
+body.locked #gender-row,
+body.locked > .content{display:none !important}
+.gate-wrap{display:none;min-height:70vh;align-items:center;justify-content:center;padding:24px}
+body.locked .gate-wrap{display:flex}
+.gate-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px 28px;max-width:360px;width:100%;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+.gate-card .gate-icon{font-size:32px;margin-bottom:12px}
+.gate-card h2{font-size:16px;font-weight:700;margin-bottom:6px}
+.gate-card p{font-size:13px;color:var(--text2);margin-bottom:18px;line-height:1.5}
+.gate-card input{width:100%;font-size:14px;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);color:var(--text);margin-bottom:12px;text-align:center}
+.gate-card input:focus{outline:2px solid var(--blue);outline-offset:1px}
+.gate-card .btn-p{width:100%}
+.gate-error{color:var(--red);font-size:12px;margin-top:8px;min-height:16px}
+</style>
+</head>
+<body class="locked">
+<div class="header">
+  <div class="header-top">
+    <a class="back-link" href="./index.html">← 팀 목록</a>
+    <h1 id="team-title">배구부 데이터 분석</h1>
+    <span class="tag" id="conn-status">연결 중...</span>
+    <span class="tag lock" id="lock-status" onclick="toggleLock()" title="클릭해서 로그아웃">🔒 잠김</span>
+    <span class="tag lock" id="change-code-btn" onclick="changeCode()" style="display:none">코드 변경</span>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn btn-sm" onclick="openMo('roster')">+ 선수 추가</button>
+      <button class="btn btn-sm btn-p" onclick="openMo('train')">+ 훈련 기록</button>
+      <button class="btn btn-sm btn-p" onclick="openMo('match')">+ 교류전 기록</button>
+      <button class="btn btn-sm btn-p" onclick="openMo('tournament')">+ 대회 기록</button>
+      <button class="btn btn-sm" onclick="openMo('event')">+ 일정 추가</button>
+    </div>
+  </div>
+  <div id="gender-row" style="display:flex;align-items:center;gap:8px;padding:10px 0 0">
+    <button id="gender-all" class="gbtn active" onclick="setGender('all')">전체</button>
+    <button id="gender-male" class="gbtn" onclick="setGender('male')"> 남자부</button>
+    <button id="gender-female" class="gbtn" onclick="setGender('female')"> 여자부</button>
+  </div>
+  <nav class="nav">
+    <button class="nb active" onclick="switchTab('overview',this)">개요</button>
+    <button class="nb" onclick="switchTab('training',this)">월별 훈련</button>
+    <button class="nb" onclick="switchTab('match',this)">교류전</button>
+    <button class="nb" onclick="switchTab('tournament',this)">대회</button>
+    <button class="nb" onclick="switchTab('pstat',this)">선수 기록</button>
+    <button class="nb" onclick="switchTab('roster',this)">선수 명단</button>
+    <button class="nb" onclick="switchTab('calendar',this)">일정</button>
+  </nav>
+</div>
+<div class="gate-wrap" id="gate-wrap">
+  <div class="gate-card">
+    <div class="gate-icon">🔒</div>
+    <h2 id="gate-title">비공개 팀 페이지</h2>
+    <p>이 팀의 기록은 팀 코드를 입력해야 확인할 수 있습니다.</p>
+    <input id="gate-code-input" type="password" placeholder="팀 코드 입력" onkeydown="if(event.key==='Enter')submitGateCode()"/>
+    <button class="btn btn-p" id="gate-submit-btn" onclick="submitGateCode()">확인</button>
+    <div class="gate-error" id="gate-error"></div>
+  </div>
+</div>
+<div class="content">
+  <div class="banner" id="setup-banner" style="display:none">
+    <div style="font-size:20px">⚠️</div>
+    <div>
+      <h3>팀을 찾을 수 없습니다</h3>
+      <p>URL의 <code>?team=</code> 값을 확인해주세요. <a href="./index.html">팀 목록으로 돌아가기</a></p>
+    </div>
+  </div>
+  <div id="tab-overview" class="tc active">
+    <!-- 개요 서브탭 -->
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <button id="ov-tab-training" class="btn btn-p" onclick="setOvTab('training')" style="font-size:12px"> 훈련 통계</button>
+      <button id="ov-tab-match" class="btn" onclick="setOvTab('match')" style="font-size:12px"> 교류전 통계</button>
+      <button id="ov-tab-tournament" class="btn" onclick="setOvTab('tournament')" style="font-size:12px"> 대회 통계</button>
+    </div>
+    <div class="mg" id="ov-metrics"><div class="loading"><div class="spinner"></div>불러오는 중...</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card"><div class="card-title">공격 효율 추이 (월별)</div><div style="position:relative;height:200px"><canvas id="attackChart">월별 공격 효율 차트</canvas></div></div>
+      <div class="card"><div class="card-title">리시브 성공률 추이 (월별)</div><div style="position:relative;height:200px"><canvas id="receiveChart">월별 리시브 성공률 차트</canvas></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card"><div class="card-title">최근 교류전</div><div id="ov-matches"><div class="loading"><div class="spinner"></div></div></div></div>
+      <div class="card"><div class="card-title">이달 일정</div><div id="ov-schedule"><div class="loading"><div class="spinner"></div></div></div></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div class="card-title" style="margin-bottom:0">선수별 추이</div>
+        <select id="ov-player" onchange="renderPlayerChart()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);color:var(--text)">
+          <option value="">선수 선택</option>
+        </select>
+        <select id="ov-chart-type" onchange="renderPlayerChart()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);color:var(--text)">
+          <option value="monthly">월별 추이</option>
+          <option value="daily">일별 추이</option>
+        </select>
+      </div>
+      <div id="ov-player-metrics" style="margin-bottom:16px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px" id="ov-chart1-title">-</div><div style="position:relative;height:180px"><canvas id="ovChart1">차트1</canvas></div></div>
+        <div><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px" id="ov-chart2-title">-</div><div style="position:relative;height:180px"><canvas id="ovChart2">차트2</canvas></div></div>
+        <div><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px" id="ov-chart3-title">-</div><div style="position:relative;height:180px"><canvas id="ovChart3">차트3</canvas></div></div>
+        <div><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px" id="ov-chart4-title">-</div><div style="position:relative;height:180px"><canvas id="ovChart4">차트4</canvas></div></div>
+      </div>
+      <div id="ov-player-empty" class="empty" style="display:none">선수를 선택하세요.</div>
+    </div>
+  </div>
+  <div id="tab-training" class="tc">
+    <div class="fr">
+      <label>포지션</label>
+      <select id="f-tpos" onchange="renderTraining()"><option value="">전체</option><option>세터</option><option>아웃사이드 히터</option><option>미들블로커</option><option>아포짓 스파이커</option><option>리베로</option></select>
+      <label>월</label>
+      <select id="f-tmon" onchange="renderTraining()"><option value="">전체</option><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select>
+      <label>선수</label>
+      <select id="f-tname" onchange="renderTraining()"><option value="">전체</option></select>
+    </div>
+    <div class="tbl-wrap">
+      <table><thead><tr>
+        <th>날짜</th><th>선수</th><th>포지션</th>
+        <th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">공격효율</th><th class="n">공격성공률</th>
+        <th class="n">서브에이스</th><th class="n">서브범실</th>
+        <th class="n">리시브범실</th><th class="n">리시브성공률</th>
+        <th class="n">디그시도</th><th class="n">디그성공</th><th class="n">디그성공률</th>
+        <th class="n">총실책</th><th class="n">개인실책</th><th>관리</th>
+      </tr></thead><tbody id="t-tbody"></tbody></table>
+    </div>
+  </div>
+  <div id="tab-match" class="tc">
+    <div class="tbl-wrap">
+      <table><thead><tr>
+        <th>날짜</th><th>상대팀</th><th>결과</th><th>선수</th>
+        <th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">공격효율</th><th class="n">공격성공률</th>
+        <th class="n">서브에이스</th><th class="n">서브범실</th>
+        <th class="n">리시브범실</th><th class="n">리시브성공률</th>
+        <th class="n">디그시도</th><th class="n">디그성공</th><th class="n">디그성공률</th>
+        <th class="n">총실책</th><th class="n">개인실책</th><th>관리</th>
+      </tr></thead><tbody id="m-tbody"></tbody></table>
+    </div>
+  </div>
+  <div id="tab-tournament" class="tc">
+    <div class="tbl-wrap">
+      <table><thead><tr>
+        <th>날짜</th><th>대회명</th><th>결과</th><th>선수</th>
+        <th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">공격효율</th><th class="n">공격성공률</th>
+        <th class="n">서브에이스</th><th class="n">서브범실</th>
+        <th class="n">리시브범실</th><th class="n">리시브성공률</th>
+        <th class="n">디그시도</th><th class="n">디그성공</th><th class="n">디그성공률</th>
+        <th class="n">총실책</th><th class="n">개인실책</th><th>관리</th>
+      </tr></thead><tbody id="tour-tbody"></tbody></table>
+    </div>
+  </div>
+  <div id="tab-pstat" class="tc">
+    <div class="fr">
+      <label>선수</label>
+      <select id="pstat-sel" onchange="renderPStat()"><option value="">선수 선택</option></select>
+    </div>
+    <div id="pstat-content"><div class="empty">위에서 선수를 선택하세요.</div></div>
+  </div>
+  <div id="tab-roster" class="tc">
+    <div class="fr">
+      <label>포지션</label>
+      <select id="f-rpos" onchange="renderRoster()"><option value="">전체</option><option>세터</option><option>아웃사이드 히터</option><option>미들블로커</option><option>아포짓 스파이커</option><option>리베로</option></select>
+    </div>
+    <div class="mg" id="roster-summary"></div>
+    <div class="card"><div id="roster-list"><div class="loading"><div class="spinner"></div>불러오는 중...</div></div></div>
+  </div>
+  <div id="tab-calendar" class="tc">
+    <div class="cal-wrap">
+      <div>
+        <div class="cal-nav">
+          <button onclick="calMove(-1)">&#8249;</button>
+          <span class="cal-month-lbl" id="cal-label"></span>
+          <button onclick="calMove(1)">&#8250;</button>
+          <button class="btn" style="margin-left:auto" onclick="openMo('event')">+ 일정 추가</button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-title" id="sel-date-lbl">날짜를 클릭하세요</div>
+          <div id="day-events"><div class="empty" style="padding:16px;font-size:13px">날짜를 선택하면 일정이 표시됩니다.</div></div>
+        </div>
+        <div class="card"><div class="card-title">이달 전체 일정</div><div id="month-events"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast-wrap" id="toast-wrap"></div>
+<!-- 훈련 모달 -->
+<div class="overlay" id="mo-train">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">훈련 데이터 입력</span><button class="x-btn" onclick="closeMo('train')">×</button></div>
+    <div class="fg">
+      <div class="fgrp"><label>날짜 *</label><input id="t-date" type="date"/></div>
+      <div class="fgrp fg-full"><label>선수 선택</label><select id="t-player" onchange="fillPos('t')"><option value="">-- 선수를 선택하세요 --</option></select></div>
+      <input type="hidden" id="t-name"/><input type="hidden" id="t-pos"/>
+      <div class="fsec">공격 지표</div>
+      <div class="fgrp"><label>공격 시도</label><input id="t-att" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>공격 득점</label><input id="t-att-s" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>공격 범실</label><input id="t-att-e" type="number" min="0" placeholder="0" oninput="calcErrT('t')"/></div>
+      <div class="fsec">서브 지표</div>
+      <div class="fgrp"><label>서브 에이스</label><input id="t-srv-a" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>서브 범실</label><input id="t-srv-e" type="number" min="0" placeholder="0" oninput="calcErrT('t')"/></div>
+      <div class="fsec">리시브 지표</div>
+      <div class="fgrp"><label>리시브 범실</label><input id="t-rcv-e" type="number" min="0" placeholder="0" oninput="calcErrT('t')"/></div>
+      <div class="fgrp"><label>리시브 성공 횟수</label><input id="t-rcv-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>리시브 시도</label><input id="t-rcv-att" type="number" min="0" placeholder="0"/></div>
+      <div class="fsec">디그 지표</div>
+      <div class="fgrp"><label>디그 시도</label><input id="t-dig-att" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>디그 성공</label><input id="t-dig-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fsec">실책</div>
+      <div class="fgrp"><label>개인 실책</label><input id="t-err-p" type="number" min="0" placeholder="0" oninput="calcErrT('t')"/></div>
+      <div class="fgrp"><label>총 실책 <span style="font-size:10px;color:var(--text2);font-weight:400">(자동계산)</span></label><input id="t-err-t" type="number" readonly style="background:var(--bg3);color:var(--text2)" placeholder="0"/></div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeMo('train')">취소</button><button class="btn btn-p" id="t-save-btn" onclick="saveTrain()">저장</button></div>
+  </div>
+</div>
+<!-- 교류전 모달 -->
+<div class="overlay" id="mo-match">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">교류전 데이터 입력</span><button class="x-btn" onclick="closeMo('match')">×</button></div>
+    <div class="fg">
+      <div class="fgrp"><label>날짜</label><input id="m-date" type="date"/></div>
+      <div class="fgrp"><label>상대팀</label><input id="m-opp" placeholder="상대팀명"/></div>
+      <div class="fgrp"><label>결과</label><select id="m-result"><option>승</option><option>패</option><option>무</option></select></div>
+      <div class="fgrp fg-full"><label>선수 선택</label><select id="m-player" onchange="fillPos('m')"><option value="">-- 선수를 선택하세요 --</option></select></div>
+      <input type="hidden" id="m-name"/><input type="hidden" id="m-pos"/>
+      <div class="fsec">공격 지표</div>
+      <div class="fgrp"><label>공격 시도</label><input id="m-att" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>공격 득점</label><input id="m-att-s" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>공격 범실</label><input id="m-att-e" type="number" min="0" placeholder="0" oninput="calcErrT('m')"/></div>
+      <div class="fsec">서브 지표</div>
+      <div class="fgrp"><label>서브 에이스</label><input id="m-srv-a" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>서브 범실</label><input id="m-srv-e" type="number" min="0" placeholder="0" oninput="calcErrT('m')"/></div>
+      <div class="fsec">리시브 지표</div>
+      <div class="fgrp"><label>리시브 범실</label><input id="m-rcv-e" type="number" min="0" placeholder="0" oninput="calcErrT('m')"/></div>
+      <div class="fgrp"><label>리시브 성공 횟수</label><input id="m-rcv-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>리시브 시도</label><input id="m-rcv-att" type="number" min="0" placeholder="0"/></div>
+      <div class="fsec">디그 지표</div>
+      <div class="fgrp"><label>디그 시도</label><input id="m-dig-att" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>디그 성공</label><input id="m-dig-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fsec">실책</div>
+      <div class="fgrp"><label>개인 실책</label><input id="m-err-p" type="number" min="0" placeholder="0" oninput="calcErrT('m')"/></div>
+      <div class="fgrp"><label>총 실책 <span style="font-size:10px;color:var(--text2);font-weight:400">(자동계산)</span></label><input id="m-err-t" type="number" readonly style="background:var(--bg3);color:var(--text2)" placeholder="0"/></div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeMo('match')">취소</button><button class="btn btn-p" id="m-save-btn" onclick="saveMatch()">저장</button></div>
+  </div>
+</div>
+<!-- 선수 모달 -->
+<div class="overlay" id="mo-roster">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hd"><span class="modal-title" id="r-modal-title">선수 추가</span><button class="x-btn" onclick="closeMo('roster')">×</button></div>
+    <div class="fg">
+      <div class="fgrp"><label>이름 *</label><input id="r-name" placeholder="홍길동"/></div>
+      <div class="fgrp"><label>등번호</label><input id="r-num" type="number" min="1" placeholder="10"/></div>
+      <div class="fgrp"><label>성별 *</label><select id="r-gender"><option value="male">남</option><option value="female">여</option></select></div>
+      <div class="fgrp"><label>포지션 *</label><select id="r-pos"><option>세터</option><option>아웃사이드 히터</option><option>미들블로커</option><option>아포짓 스파이커</option><option>리베로</option></select></div>
+      <div class="fgrp"><label>학년 / 기수</label><input id="r-grade" placeholder="3학년"/></div>
+      <div class="fgrp"><label>키 (cm)</label><input id="r-height" type="number" placeholder="185"/></div>
+      <div class="fgrp"><label>최고 타점 (cm)</label><input id="r-reach" type="number" placeholder="310"/></div>
+      <div class="fgrp fg-full"><label>메모</label><textarea id="r-memo" rows="2" placeholder="부상 이력, 특이사항 등"></textarea></div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeMo('roster')">취소</button><button class="btn btn-p" id="r-save-btn" onclick="saveRoster()">저장</button></div>
+  </div>
+</div>
+<!-- 대회 모달 -->
+<div class="overlay" id="mo-tournament">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">대회 데이터 입력</span><button class="x-btn" onclick="closeMo('tournament')">×</button></div>
+    <div class="fg">
+      <div class="fgrp"><label>날짜</label><input id="tour-date" type="date"/></div>
+      <div class="fgrp"><label>대회명</label><input id="tour-opp" placeholder="대회명"/></div>
+      <div class="fgrp"><label>결과</label><select id="tour-result"><option>승</option><option>패</option><option>무</option></select></div>
+      <div class="fgrp fg-full"><label>선수 선택</label><select id="tour-player" onchange="fillPos('tour')"><option value="">-- 선수를 선택하세요 --</option></select></div>
+      <input type="hidden" id="tour-name"/><input type="hidden" id="tour-pos"/>
+      <div class="fsec">공격 지표</div>
+      <div class="fgrp"><label>공격 시도</label><input id="tour-att" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>공격 득점</label><input id="tour-att-s" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>공격 범실</label><input id="tour-att-e" type="number" min="0" placeholder="0" oninput="calcErrT('tour')"/></div>
+      <div class="fsec">서브 지표</div>
+      <div class="fgrp"><label>서브 에이스</label><input id="tour-srv-a" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>서브 범실</label><input id="tour-srv-e" type="number" min="0" placeholder="0" oninput="calcErrT('tour')"/></div>
+      <div class="fsec">리시브 지표</div>
+      <div class="fgrp"><label>리시브 범실</label><input id="tour-rcv-e" type="number" min="0" placeholder="0" oninput="calcErrT('tour')"/></div>
+      <div class="fgrp"><label>리시브 성공 횟수</label><input id="tour-rcv-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>리시브 시도</label><input id="tour-rcv-att" type="number" min="0" placeholder="0"/></div>
+      <div class="fsec">디그 지표</div>
+      <div class="fgrp"><label>디그 시도</label><input id="tour-dig-att" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>디그 성공</label><input id="tour-dig-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fsec">실책</div>
+      <div class="fgrp"><label>개인 실책</label><input id="tour-err-p" type="number" min="0" placeholder="0" oninput="calcErrT('tour')"/></div>
+      <div class="fgrp"><label>총 실책 <span style="font-size:10px;color:var(--text2);font-weight:400">(자동계산)</span></label><input id="tour-err-t" type="number" readonly style="background:var(--bg3);color:var(--text2)" placeholder="0"/></div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeMo('tournament')">취소</button><button class="btn btn-p" id="tour-save-btn" onclick="saveTournament()">저장</button></div>
+  </div>
+</div>
+<!-- 일정 모달 -->
+<div class="overlay" id="mo-event">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hd"><span class="modal-title" id="ev-modal-title">일정 추가</span><button class="x-btn" onclick="closeMo('event')">×</button></div>
+    <div class="fg">
+      <div class="fgrp fg-full"><label>제목 *</label><input id="ev-title" placeholder="정기 훈련, 교류전 등"/></div>
+      <div class="fgrp fg-full"><label>유형 (복수 선택 가능)</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:5px;font-weight:400;cursor:pointer"><input type="checkbox" id="ev-t-training" value="training" checked style="width:auto"/> 훈련</label>
+          <label style="display:flex;align-items:center;gap:5px;font-weight:400;cursor:pointer"><input type="checkbox" id="ev-t-match" value="match" style="width:auto"/> 교류전</label>
+          <label style="display:flex;align-items:center;gap:5px;font-weight:400;cursor:pointer"><input type="checkbox" id="ev-t-tournament" value="tournament" style="width:auto"/> 대회</label>
+          <label style="display:flex;align-items:center;gap:5px;font-weight:400;cursor:pointer"><input type="checkbox" id="ev-t-meeting" value="meeting" style="width:auto"/> 회의</label>
+          <label style="display:flex;align-items:center;gap:5px;font-weight:400;cursor:pointer"><input type="checkbox" id="ev-t-other" value="other" style="width:auto"/> 기타</label>
+        </div>
+      </div>
+      <div class="fgrp fg-full">
+        <label>날짜 * <span style="font-size:11px;color:var(--text2);font-weight:400">— 여러 날짜 선택 가능</span></label>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+          <input id="ev-date-input" type="date" style="flex:1;font-size:13px;padding:8px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);color:var(--text)"/>
+          <button type="button" class="btn" onclick="addEvDate()" style="white-space:nowrap;flex-shrink:0">+ 추가</button>
+        </div>
+        <div id="ev-date-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px"></div>
+        <input type="hidden" id="ev-date"/>
+      </div>
+      <div class="fgrp"><label>시간</label><input id="ev-time" type="time"/></div>
+      <div class="fgrp fg-full"><label>장소</label><input id="ev-loc" placeholder="본교 체육관"/></div>
+      <div class="fgrp fg-full"><label>메모</label><textarea id="ev-memo" rows="2" placeholder="추가 내용"></textarea></div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeMo('event')">취소</button><button class="btn btn-p" id="ev-save-btn" onclick="saveEvent()">저장</button></div>
+  </div>
+</div>
+<script>
+// ============== Supabase 연동 설정 ==============
+const SUPABASE_URL = 'https://rrglljipaothpvswqzkm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyZ2xsamlwYW90aHB2c3dxemttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNDA0NjcsImV4cCI6MjEwMzgxNjQ2N30.53AN3JbmiKiTLB2RvqpWxgcz-8raIr0qpxpzIQHNtOI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const urlParams = new URLSearchParams(location.search);
+const TEAM_PARAM = urlParams.get('team') || '';
+let TEAM_ID = null;
+let TEAM_NAME = '';
+let editCode = '';
+
+const posColors={'세터':['#EEEDFE','#3C3489'],'아웃사이드 히터':['#E6F1FB','#185FA5'],'미들블로커':['#FAEEDA','#854F0B'],'아포짓 스파이커':['#EAF3DE','#3B6D11'],'리베로':['#FBEAF0','#72243E']};
+const evtCols={training:{bg:'#EAF3DE',text:'#27500A',bar:'#3B6D11',lbl:'훈련'},match:{bg:'#E6F1FB',text:'#0C447C',bar:'#185FA5',lbl:'교류전'},tournament:{bg:'#FCEBEB',text:'#791F1F',bar:'#A32D2D',lbl:'대회'},meeting:{bg:'#FAEEDA',text:'#633806',bar:'#854F0B',lbl:'회의'},other:{bg:'#EEEDFE',text:'#26215C',bar:'#3C3489',lbl:'기타'}};
+let db={roster:[],training:[],match:[],tournament:[],events:[]};
+let eids={train:null,match:null,tournament:null,roster:null,event:null};
+let calY,calM,selDate;
+let atkC=null,rcvC=null;
+let currentGender='all';
+let currentOvTab='training';
+
+// ── 팀 코드 처리: 조회/편집 모두 코드가 있어야 가능 (비공개 팀 페이지) ──
+function updateLockUI(){
+  const el=gid('lock-status');
+  if(!el)return;
+  el.textContent='🔓 코드 확인됨';
+  el.title='클릭해서 잠그기(로그아웃)';
+  const cc=gid('change-code-btn'); if(cc) cc.style.display='inline-block';
+}
+async function changeCode(){
+  const oldCode = prompt('현재 코드를 입력하세요:');
+  if(!oldCode) return;
+  const newCode = prompt('새 코드를 입력하세요 (4자 이상):');
+  if(!newCode) return;
+  if(newCode.length<4){ toast('새 코드는 4자 이상이어야 합니다.','error'); return; }
+  const {data, error} = await sb.rpc('change_team_code',{p_team_id:TEAM_ID, p_old_code:oldCode, p_new_code:newCode});
+  if(error || !data){ toast('코드 변경 실패: '+(error?error.message:'현재 코드가 올바르지 않습니다.'),'error'); return; }
+  editCode = newCode;
+  sessionStorage.setItem('editCode_'+TEAM_ID, editCode);
+  toast('코드가 변경되었습니다.','success');
+}
+function toggleLock(){
+  if(!editCode) return;
+  if(confirm('이 기기에서 팀 코드를 잊고 다시 잠글까요? (조회하려면 코드를 다시 입력해야 합니다)')){
+    sessionStorage.removeItem('editCode_'+TEAM_ID);
+    location.reload();
+  }
+}
+// 쓰기 RPC 공통 래퍼: 코드가 만료/변경된 경우 다시 잠그고 새로고침 유도
+async function callWriteRpc(fnName, params){
+  if(!editCode) return {data:null, error:{message:'코드가 필요합니다.'}};
+  params.p_code = editCode;
+  let {data, error} = await sb.rpc(fnName, params);
+  if(error && /코드/.test(error.message||'')){
+    sessionStorage.removeItem('editCode_'+TEAM_ID);
+    toast('팀 코드가 더 이상 유효하지 않습니다. 새로고침 후 다시 입력해주세요.','error');
+  }
+  return {data, error};
+}
+
+function fmtDate(v){
+  if(!v)return'';
+  const s=String(v);
+  if(s.includes('T'))return s.slice(0,10);
+  return s.slice(0,10);
+}
+function numify(d){
+  ['month','att','attS','attE','srvA','srvE','rcvE','rcvOk','rcvAtt','digAtt','digOk','errT','errP','num','height','reach']
+  .forEach(k=>{if(d[k]!==undefined&&d[k]!==null)d[k]=parseFloat(d[k])||0;});
+  if(d.date!==undefined&&d.date)d.date=fmtDate(d.date);
+  if(d.date&&!d.month)d.month=parseInt(d.date.slice(5,7))||0;
+  if(d.gender!==undefined)d.gender=String(d.gender||'male').trim()||'male';
+  return d;
+}
+async function resolveTeam(){
+  if(!TEAM_PARAM) return false;
+  const isUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(TEAM_PARAM);
+  const q = sb.from('teams').select('id,name,slug');
+  const {data, error} = isUuid ? await q.eq('id',TEAM_PARAM).maybeSingle() : await q.ilike('slug',TEAM_PARAM).maybeSingle();
+  if(error || !data) return false;
+  TEAM_ID = data.id; TEAM_NAME = data.name;
+  return true;
+}
+// 코드로 실제 데이터를 가져온다 (모든 조회는 RPC를 통해서만 가능)
+async function fetchAllData(code){
+  const [r,t,m,tour,e]=await Promise.all([
+    sb.rpc('get_players',{p_team_id:TEAM_ID, p_code:code}),
+    sb.rpc('get_training',{p_team_id:TEAM_ID, p_code:code}),
+    sb.rpc('get_match',{p_team_id:TEAM_ID, p_code:code}),
+    sb.rpc('get_tournament',{p_team_id:TEAM_ID, p_code:code}),
+    sb.rpc('get_events',{p_team_id:TEAM_ID, p_code:code})
+  ]);
+  if(r.error) return false;
+  db.roster=(r.data||[]).map(numify);db.training=(t.data||[]).map(numify);db.match=(m.data||[]).map(numify);db.tournament=(tour.data||[]).map(numify);db.events=(e.data||[]).map(ev=>({...ev,date:fmtDate(ev.date)}));
+  return true;
+}
+function showGate(){ document.body.classList.add('locked'); }
+function hideGate(){
+  document.body.classList.remove('locked');
+  const st=document.getElementById('conn-status');
+  st.textContent='연결됨';st.style.background='#EAF3DE';st.style.color='#27500A';
+  updateLockUI();
+  const now=new Date();calY=now.getFullYear();calM=now.getMonth();
+  renderOverview();refreshPSel();
+}
+async function submitGateCode(){
+  const input = gid('gate-code-input').value;
+  const errEl = gid('gate-error');
+  errEl.textContent='';
+  if(!input){ errEl.textContent='코드를 입력하세요.'; return; }
+  const btn = gid('gate-submit-btn'); btn.textContent='확인 중...'; btn.disabled=true;
+  const ok = await fetchAllData(input);
+  btn.textContent='확인'; btn.disabled=false;
+  if(!ok){ errEl.textContent='코드가 올바르지 않습니다.'; return; }
+  editCode = input;
+  sessionStorage.setItem('editCode_'+TEAM_ID, editCode);
+  hideGate();
+}
+async function loadAll(){
+  const st=document.getElementById('conn-status');
+  const bn=document.getElementById('setup-banner');
+  const ok = await resolveTeam();
+  if(!ok){
+    st.textContent='팀 없음';st.style.background='#FCEBEB';st.style.color='#A32D2D';
+    document.body.classList.remove('locked');
+    bn.style.display='flex';
+    const now=new Date();calY=now.getFullYear();calM=now.getMonth();
+    return;
+  }
+  document.title='배구부 데이터 분석 - '+TEAM_NAME;
+  gid('team-title').textContent=TEAM_NAME;
+  gid('gate-title').textContent=TEAM_NAME+' - 비공개 팀 페이지';
+  const stored = sessionStorage.getItem('editCode_'+TEAM_ID);
+  if(stored){
+    const ok2 = await fetchAllData(stored);
+    if(ok2){ editCode=stored; hideGate(); return; }
+    sessionStorage.removeItem('editCode_'+TEAM_ID);
+  }
+  showGate();
+}
+function switchTab(name,el){
+  document.querySelectorAll('.tc').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(el)el.classList.add('active');
+  if(name==='overview')renderOverview();
+  if(name==='training')renderTraining();
+  if(name==='match')renderMatchTab();
+  if(name==='tournament')renderTournamentTab();
+  if(name==='pstat')refreshPSel();
+  if(name==='roster')renderRoster();
+  if(name==='calendar')renderCalendar();
+}
+function openMo(k){
+  if(k==='train'){eids.train=null;clr(['t-att','t-att-s','t-att-e','t-srv-a','t-srv-e','t-rcv-e','t-rcv-ok','t-rcv-att','t-dig-att','t-dig-ok','t-err-t','t-err-p']);gid('t-date').value=new Date().toISOString().slice(0,10);fillRSel('t-player');}
+  if(k==='match'){eids.match=null;clr(['m-opp','m-att','m-att-s','m-att-e','m-srv-a','m-srv-e','m-rcv-e','m-rcv-ok','m-rcv-att','m-dig-att','m-dig-ok','m-err-t','m-err-p']);gid('m-date').value=new Date().toISOString().slice(0,10);fillRSel('m-player');}
+  if(k==='tournament'){eids.tournament=null;clr(['tour-opp','tour-att','tour-att-s','tour-att-e','tour-srv-a','tour-srv-e','tour-rcv-e','tour-rcv-ok','tour-rcv-att','tour-dig-att','tour-dig-ok','tour-err-t','tour-err-p']);gid('tour-date').value=new Date().toISOString().slice(0,10);fillRSel('tour-player');}
+  if(k==='roster'){eids.roster=null;document.getElementById('r-modal-title').textContent='선수 추가';clr(['r-name','r-num','r-grade','r-height','r-reach','r-memo']);gid('r-pos').value='세터';gid('r-gender').value=currentGender==='female'?'female':'male';}
+  if(k==='event'){eids.event=null;document.getElementById('ev-modal-title').textContent='일정 추가';clr(['ev-title','ev-loc','ev-memo','ev-time']);gid('ev-date').value='';gid('ev-date-input').value='';if(gid('ev-date-tags'))gid('ev-date-tags').innerHTML='';['training','match','tournament','meeting','other'].forEach(t=>{if(gid('ev-t-'+t))gid('ev-t-'+t).checked=(t==='training');});}
+  document.getElementById('mo-'+k).classList.add('open');
+}
+function closeMo(k){document.getElementById('mo-'+k).classList.remove('open');}
+function gid(id){return document.getElementById(id);}
+function clr(ids){ids.forEach(id=>{const e=gid(id);if(e)e.value='';});}
+function gv(id){return parseFloat(gid(id).value)||0;}
+function gs(id){return gid(id).value.trim();}
+function fillRSel(sid){
+  const s=gid(sid);
+  const filtered=gFilter(db.roster);
+  s.innerHTML='<option value="">-- 선수를 선택하세요 --</option>'+filtered.map(r=>`<option value="${r.id}">${r.num?'#'+r.num+' ':''}${r.name} · ${r.pos}</option>`).join('');
+}
+function fillPos(p){const rid=gid(p+'-player').value;if(!rid)return;const r=db.roster.find(x=>String(x.id)===String(rid));if(!r)return;gid(p+'-name').value=r.name;gid(p+'-pos').value=r.pos;}
+function setBtn(id,loading){const b=gid(id);if(b)b.textContent=loading?'저장 중...':'저장';}
+function calcErrT(p){
+  const attE=parseFloat(gid(p+'-att-e')?.value)||0;
+  const srvE=parseFloat(gid(p+'-srv-e')?.value)||0;
+  const rcvE=parseFloat(gid(p+'-rcv-e')?.value)||0;
+  const errP=parseFloat(gid(p+'-err-p')?.value)||0;
+  const errT=gid(p+'-err-t');
+  if(errT)errT.value=attE+srvE+rcvE+errP;
+}
+async function saveTrain(){
+  const name=gs('t-name');if(!name){toast('선수명을 입력하세요.','error');return;}
+  const dateVal=gs('t-date');if(!dateVal){toast('날짜를 입력하세요.','error');return;}
+  const month=parseInt(dateVal.slice(5,7));
+  const attE=gv('t-att-e'),srvE=gv('t-srv-e'),rcvE=gv('t-rcv-e'),errP=gv('t-err-p');
+  const data={date:dateVal,month,name,pos:gs('t-pos'),att:gv('t-att'),attS:gv('t-att-s'),attE,srvA:gv('t-srv-a'),srvE,rcvS:0,rcvE,rcvOk:gv('t-rcv-ok'),rcvAtt:gv('t-rcv-att'),digAtt:gv('t-dig-att'),digOk:gv('t-dig-ok'),errT:attE+srvE+rcvE+errP,errP};
+  setBtn('t-save-btn',true);
+  const {data:newId, error}=await callWriteRpc('add_training',{p_team_id:TEAM_ID, p_payload:data});
+  if(!error){data.id=newId;db.training.push(data);toast('훈련 데이터 저장됨','success');closeMo('train');renderTraining();}
+  else toast('저장 실패: '+error.message,'error');
+  setBtn('t-save-btn',false);
+}
+async function saveMatch(){
+  const name=gs('m-name'),opp=gs('m-opp'),date=gs('m-date');
+  if(!name||!opp||!date){toast('날짜, 상대팀, 선수명을 입력하세요.','error');return;}
+  const attE=gv('m-att-e'),srvE=gv('m-srv-e'),rcvE=gv('m-rcv-e'),errP=gv('m-err-p');
+  const data={date,opp,result:gs('m-result'),name,pos:gs('m-pos'),att:gv('m-att'),attS:gv('m-att-s'),attE,srvA:gv('m-srv-a'),srvE,rcvS:0,rcvE,rcvOk:gv('m-rcv-ok'),rcvAtt:gv('m-rcv-att'),digAtt:gv('m-dig-att'),digOk:gv('m-dig-ok'),errT:attE+srvE+rcvE+errP,errP};
+  setBtn('m-save-btn',true);
+  const {data:newId, error}=await callWriteRpc('add_match',{p_team_id:TEAM_ID, p_payload:data});
+  if(!error){data.id=newId;db.match.push(data);toast('교류전 데이터 저장됨','success');closeMo('match');renderMatchTab();}
+  else toast('저장 실패: '+error.message,'error');
+  setBtn('m-save-btn',false);
+}
+async function saveRoster(){
+  const name=gs('r-name');if(!name){toast('이름을 입력하세요.','error');return;}
+  const data={name,num:gv('r-num'),gender:gs('r-gender')||'male',pos:gs('r-pos'),grade:gs('r-grade'),height:gv('r-height'),reach:gv('r-reach'),memo:gs('r-memo')};
+  setBtn('r-save-btn',true);
+  if(eids.roster){
+    const {error}=await callWriteRpc('update_player',{p_team_id:TEAM_ID, p_id:eids.roster, p_payload:data});
+    if(error){toast('수정 실패: '+error.message,'error');setBtn('r-save-btn',false);return;}
+    data.id=eids.roster;
+    const idx=db.roster.findIndex(r=>String(r.id)===String(eids.roster));if(idx>=0)db.roster[idx]=data;
+    toast('선수 정보 수정됨','success');
+  }else{
+    const {data:newId, error}=await callWriteRpc('add_player',{p_team_id:TEAM_ID, p_payload:data});
+    if(error){toast('저장 실패: '+error.message,'error');setBtn('r-save-btn',false);return;}
+    data.id=newId;
+    db.roster.push(data);toast('선수 추가됨','success');
+  }
+  setBtn('r-save-btn',false);closeMo('roster');renderRoster();
+}
+async function saveEvent(){
+  const title=gs('ev-title'),dateVal=gs('ev-date');
+  if(!title||!dateVal){toast('제목과 날짜를 입력하세요.','error');return;}
+  const types=['training','match','tournament','meeting','other'].filter(t=>gid('ev-t-'+t)&&gid('ev-t-'+t).checked);
+  const type=types.join(',')||'other';
+  const dates=dateVal.split(',').map(d=>d.trim()).filter(Boolean);
+  setBtn('ev-save-btn',true);
+  if(eids.event){
+    const data={title,type,date:dates[0],time:gs('ev-time'),loc:gs('ev-loc'),memo:gs('ev-memo')};
+    const {error}=await callWriteRpc('update_event',{p_team_id:TEAM_ID, p_id:eids.event, p_payload:data});
+    if(error){toast('수정 실패: '+error.message,'error');setBtn('ev-save-btn',false);return;}
+    data.id=eids.event;
+    const idx=db.events.findIndex(e=>String(e.id)===String(eids.event));
+    if(idx>=0)db.events[idx]=data;
+    toast('일정 수정됨','success');
+  }else{
+    for(const date of dates){
+      const data={title,type,date,time:gs('ev-time'),loc:gs('ev-loc'),memo:gs('ev-memo')};
+      const {data:newId, error}=await callWriteRpc('add_event',{p_team_id:TEAM_ID, p_payload:data});
+      if(!error){data.id=newId;db.events.push(data);}
+    }
+    toast(dates.length>1?`${dates.length}개 날짜에 일정 추가됨`:'일정 추가됨','success');
+  }
+  setBtn('ev-save-btn',false);closeMo('event');renderCalendar();
+}
+async function delTrain(id){if(!confirm('삭제하시겠습니까?'))return;const {error}=await callWriteRpc('delete_training',{p_team_id:TEAM_ID, p_id:id});if(error){toast('삭제 실패: '+error.message,'error');return;}db.training=db.training.filter(d=>String(d.id)!==String(id));renderTraining();toast('삭제됨');}
+async function delMatch(id){if(!confirm('삭제하시겠습니까?'))return;const {error}=await callWriteRpc('delete_match',{p_team_id:TEAM_ID, p_id:id});if(error){toast('삭제 실패: '+error.message,'error');return;}db.match=db.match.filter(d=>String(d.id)!==String(id));renderMatchTab();toast('삭제됨');}
+async function delRoster(id){
+  const r=db.roster.find(x=>String(x.id)===String(id));if(!r)return;
+  if(!confirm(`'${r.name}' 선수와 관련 훈련/교류전/대회 데이터를 모두 삭제하시겠습니까?`))return;
+  const {error}=await callWriteRpc('delete_player',{p_team_id:TEAM_ID, p_id:id});
+  if(error){toast('삭제 실패: '+error.message,'error');return;}
+  db.training=db.training.filter(d=>d.name!==r.name);
+  db.match=db.match.filter(d=>d.name!==r.name);
+  db.tournament=db.tournament.filter(d=>d.name!==r.name);
+  db.roster=db.roster.filter(x=>String(x.id)!==String(id));
+  renderRoster();toast(`${r.name} 선수 및 관련 데이터 삭제됨`,'success');
+}
+async function delEvent(id){if(!confirm('일정을 삭제하시겠습니까?'))return;const {error}=await callWriteRpc('delete_event',{p_team_id:TEAM_ID, p_id:id});if(error){toast('삭제 실패: '+error.message,'error');return;}db.events=db.events.filter(e=>String(e.id)!==String(id));renderCalendar();toast('삭제됨');}
+function editRoster(id){const r=db.roster.find(x=>String(x.id)===String(id));if(!r)return;eids.roster=id;gid('r-modal-title').textContent='선수 수정';gid('r-name').value=r.name;gid('r-num').value=r.num||'';gid('r-gender').value=r.gender||'male';gid('r-pos').value=r.pos;gid('r-grade').value=r.grade||'';gid('r-height').value=r.height||'';gid('r-reach').value=r.reach||'';gid('r-memo').value=r.memo||'';gid('mo-roster').classList.add('open');}
+function editEvent(id){
+  const e=db.events.find(x=>String(x.id)===String(id));if(!e)return;
+  eids.event=id;gid('ev-modal-title').textContent='일정 수정';gid('ev-title').value=e.title;
+  const types=(e.type||'').split(',');
+  ['training','match','tournament','meeting','other'].forEach(t=>{if(gid('ev-t-'+t))gid('ev-t-'+t).checked=types.includes(t);});
+  const tags=gid('ev-date-tags');tags.innerHTML='';gid('ev-date').value=e.date||'';
+  if(e.date){e.date.split(',').forEach(d=>{gid('ev-date-input').value=d.trim();addEvDate();});}
+  gid('ev-time').value=e.time||'';gid('ev-loc').value=e.loc||'';gid('ev-memo').value=e.memo||'';
+  gid('mo-event').classList.add('open');
+}
+function cs(d){
+  const ae=d.att>0?((d.attS-d.attE)/d.att*100):0,ar=d.att>0?(d.attS/d.att*100):0,rr=d.rcvAtt>0?(d.rcvOk/d.rcvAtt*100):0,dr=d.digAtt>0?(d.digOk/d.digAtt*100):0;
+  const errT=(d.attE||0)+(d.srvE||0)+(d.rcvE||0)+(d.errP||0);
+  return{ae:ae.toFixed(1),ar:ar.toFixed(1),rr:rr.toFixed(1),dr:dr.toFixed(1),errT};
+}
+function renderOverview(){
+  const months=[1,2,3,4,5,6,7,8,9,10,11,12],ml=months.map(m=>m+'월');
+  const isTrain=currentOvTab==='training';
+  const isTour=currentOvTab==='tournament';
+  const srcData=isTrain?gFilter(db.training):isTour?gFilter(db.tournament):gFilter(db.match);
+  const srcLabel=isTrain?'훈련':'대회';
+  const ae=months.map(m=>{const r=srcData.filter(d=>d.month===m||parseInt((d.date||'').slice(5,7))===m);if(!r.length)return null;const a=r.reduce((s,d)=>s+d.att,0),as=r.reduce((s,d)=>s+d.attS,0),ae2=r.reduce((s,d)=>s+d.attE,0);return a>0?Math.round((as-ae2)/a*1000)/10:null;});
+  const rr=months.map(m=>{const r=srcData.filter(d=>d.month===m||parseInt((d.date||'').slice(5,7))===m);if(!r.length)return null;const ra=r.reduce((s,d)=>s+d.rcvAtt,0),ro=r.reduce((s,d)=>s+d.rcvOk,0);return ra>0?Math.round(ro/ra*1000)/10:null;});
+  const lm=srcData.length?Math.max(...srcData.map(d=>d.month||parseInt((d.date||'0000-01').slice(5,7)))):new Date().getMonth()+1;
+  const lt=srcData.filter(d=>(d.month||parseInt((d.date||'').slice(5,7)))===lm);
+  const tA=lt.reduce((s,d)=>s+d.att,0),tAS=lt.reduce((s,d)=>s+d.attS,0),tAE=lt.reduce((s,d)=>s+d.attE,0);
+  const tRA=lt.reduce((s,d)=>s+d.rcvAtt,0),tRO=lt.reduce((s,d)=>s+d.rcvOk,0);
+  const tSA=lt.reduce((s,d)=>s+d.srvA,0),tET=lt.reduce((s,d)=>s+(d.attE||0)+(d.srvE||0)+(d.rcvE||0)+(d.errP||0),0);
+  const periodLabel=isTrain?lm+'월':srcData.length?'전체':'전체';
+  gid('ov-metrics').innerHTML=`
+    <div class="mc"><div class="ml">${periodLabel} 공격 효율</div><div class="mv" style="color:#1D9E75">${tA>0?((tAS-tAE)/tA*100).toFixed(1):0}%</div><div class="ms">${srcLabel} 합산</div></div>
+    <div class="mc"><div class="ml">${periodLabel} 리시브 성공률</div><div class="mv">${tRA>0?(tRO/tRA*100).toFixed(1):0}%</div><div class="ms">${srcLabel} 합산</div></div>
+    <div class="mc"><div class="ml">${periodLabel} 서브 에이스</div><div class="mv">${tSA}</div><div class="ms">${srcLabel} 합산</div></div>
+    <div class="mc"><div class="ml">${periodLabel} 총 실책</div><div class="mv" style="color:#A32D2D">${tET}</div><div class="ms">${srcLabel} 합산</div></div>
+    <div class="mc"><div class="ml">선수단</div><div class="mv">${gFilter(db.roster).length}</div><div class="ms">명</div></div>
+    <div class="mc"><div class="ml">${isTrain?'훈련 기록':isTour?'대회 기록':'교류전 기록'}</div><div class="mv">${srcData.length}</div><div class="ms">건</div></div>`;
+  if(atkC)atkC.destroy();if(rcvC)rcvC.destroy();
+  atkC=new Chart(gid('attackChart'),{type:'line',data:{labels:ml,datasets:[{label:'공격효율(%)',data:ae,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.08)',tension:.3,pointRadius:4,fill:true,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>parseFloat(v).toFixed(1)+'%'}}}}});
+  rcvC=new Chart(gid('receiveChart'),{type:'line',data:{labels:ml,datasets:[{label:'리시브성공률(%)',data:rr,borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,0.08)',tension:.3,pointRadius:4,fill:true,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>parseFloat(v).toFixed(1)+'%'}}}}});
+  const gameData=isTrain?[]:isTour?gFilter(db.tournament):gFilter(db.match);
+  const gameLabel=isTour?'대회명':'상대팀';
+  const opps=[...new Set(gameData.map(d=>d.date+'|'+d.opp+'|'+d.result))].sort((a,b)=>b.localeCompare(a)).slice(0,5);
+  gid('ov-matches').innerHTML=opps.length
+    ?`<table><thead><tr><th>날짜</th><th>${gameLabel}</th><th>결과</th><th class="n">참가선수</th></tr></thead><tbody>${opps.map(s=>{const[d,o,r]=s.split('|');const cnt=gameData.filter(m=>m.date===d&&m.opp===o).length;const cls=r==='승'?'b-green':r==='패'?'b-red':'b-amber';return`<tr><td>${d}</td><td>${o}</td><td><span class="badge ${cls}">${r}</span></td><td class="n">${cnt}명</td></tr>`;}).join('')}</tbody></table>`
+    :`<div class="empty">${isTrain?'훈련':isTour?'대회':'교류전'} 데이터가 없습니다.</div>`;
+  const now=new Date(),ms=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const evts=db.events.filter(e=>fmtDate(e.date).startsWith(ms)).sort((a,b)=>fmtDate(a.date).localeCompare(fmtDate(b.date))).slice(0,6);
+  gid('ov-schedule').innerHTML=evts.length?evts.map(e=>{const c=evtCols[e.type]||evtCols.other;const ed=fmtDate(e.date);return`<div class="evt-item"><div class="evt-bar" style="background:${c.bar}"></div><div class="evt-body"><div class="evt-title">${ed.slice(8)}일 · ${e.title}</div><div class="evt-meta">${e.time||''} ${e.loc?'· '+e.loc:''}</div></div></div>`;}).join(''):'<div class="empty">이달 일정이 없습니다.</div>';
+  refreshOvPlayerSel();
+}
+function renderTraining(){
+  const pos=gid('f-tpos').value,mon=gid('f-tmon').value,nm=gid('f-tname').value;
+  const names=[...new Set(gFilter(db.training).map(d=>d.name))].sort();
+  const ftn=gid('f-tname');const curNm=ftn.value;
+  ftn.innerHTML='<option value="">전체</option>'+names.map(n=>`<option ${n===curNm?'selected':''}>${n}</option>`).join('');
+  const rows=gFilter(db.training).filter(d=>(!pos||d.pos===pos)&&(!mon||d.month===parseInt(mon))&&(!nm||d.name===nm)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const tbody=gid('t-tbody');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="18" class="empty">조회된 데이터가 없습니다.</td></tr>';return;}
+  tbody.innerHTML=rows.map(d=>{const s=cs(d);return`<tr><td>${d.date}</td><td><b>${d.name}</b></td><td>${d.pos}</td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delTrain('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;}).join('');
+}
+function renderMatchTab(){
+  const rows=[...gFilter(db.match)].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const tbody=gid('m-tbody');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="19" class="empty">조회된 데이터가 없습니다.</td></tr>';return;}
+  tbody.innerHTML=rows.map(d=>{const s=cs(d);const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';return`<tr><td>${d.date}</td><td>${d.opp}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${d.name}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delMatch('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;}).join('');
+}
+function refreshPSel(){
+  const names=[...new Set([...gFilter(db.training),...gFilter(db.match),...gFilter(db.tournament),...gFilter(db.roster)].map(d=>d.name))].sort();
+  const s=gid('pstat-sel'),cur=s.value;
+  s.innerHTML='<option value="">선수 선택</option>'+names.map(n=>`<option ${n===cur?'selected':''}>${n}</option>`).join('');
+  if(cur)renderPStat();
+}
+function renderPStat(){
+  const name=gid('pstat-sel').value,cont=gid('pstat-content');
+  if(!name){cont.innerHTML='<div class="empty">위에서 선수를 선택하세요.</div>';return;}
+  const tR=gFilter(db.training).filter(d=>d.name===name),mR=gFilter(db.match).filter(d=>d.name===name),all=[...tR,...mR];
+  const ro=db.roster.find(r=>r.name===name);
+  const pc=posColors[ro?.pos]||['#F1EFE8','#5F5E5A'];
+  const metrics2=(ro&&posMetrics[ro.pos])||defaultMetrics;
+  const metricCards=metrics2.map(m=>{const vals=all.map(d=>m.calc(d)).filter(v=>v!==null&&v!==undefined);const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;const isPercent=['ae','ar','rr','dr'].includes(m.key);return`<div class="mc"><div class="ml">${m.label}</div><div class="mv" style="color:${m.color}">${avg.toFixed(1)}${isPercent?'%':''}</div><div class="ms">평균 (${vals.length}회)</div></div>`;}).join('');
+  const tEP=all.reduce((s,d)=>s+d.errP,0);
+  cont.innerHTML=`${ro?`<div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><div class="avatar" style="width:48px;height:48px;font-size:14px;background:${pc[0]};color:${pc[1]}">${ro.name.slice(0,2)}</div><div><div style="font-size:16px;font-weight:700">${ro.num?'#'+ro.num+' ':''}${ro.name}</div><div style="font-size:13px;color:var(--text2);margin-top:3px">${ro.pos}${ro.grade?' · '+ro.grade:''} ${ro.height?'· '+ro.height+'cm':''}</div></div></div>`:''}<div class="mg">${metricCards}<div class="mc"><div class="ml">개인 실책(합)</div><div class="mv" style="color:#A32D2D">${tEP}</div></div></div><div class="card"><div class="card-title">훈련 기록 (${tR.length}건)</div>${tR.length?`<div class="tbl-wrap"><table><thead><tr><th>날짜</th><th class="n">공격효율</th><th class="n">공격성공률</th><th class="n">리시브성공률</th><th class="n">디그성공률</th><th class="n">서브에이스</th><th class="n">개인실책</th></tr></thead><tbody>${tR.map(d=>{const s=cs(d);return`<tr><td>${d.date}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${s.rr}%</td><td class="n">${s.dr}%</td><td class="n">${d.srvA}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="empty" style="padding:16px">훈련 데이터 없음</div>'}</div><div class="card"><div class="card-title">교류전 기록 (${mR.length}건)</div>${mR.length?`<div class="tbl-wrap"><table><thead><tr><th>날짜</th><th>상대</th><th>결과</th><th class="n">공격효율</th><th class="n">공격성공률</th><th class="n">리시브성공률</th><th class="n">서브에이스</th><th class="n">개인실책</th></tr></thead><tbody>${mR.map(d=>{const s=cs(d);const cls=d.result==='승'?'b-green':'b-red';return`<tr><td>${d.date}</td><td>${d.opp}</td><td><span class="badge ${cls}">${d.result}</span></td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${s.rr}%</td><td class="n">${d.srvA}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="empty" style="padding:16px">교류전 데이터 없음</div>'}</div>`;
+}
+function renderRoster(){
+  const pos=gid('f-rpos').value,rows=gFilter(db.roster).filter(r=>!pos||r.pos===pos);
+  const pO=['세터','아웃사이드 히터','미들블로커','아포짓 스파이커','리베로'],byP={};
+  gFilter(db.roster).forEach(r=>{byP[r.pos]=(byP[r.pos]||0)+1;});
+  const gFiltered=gFilter(db.roster);
+  gid('roster-summary').innerHTML=pO.map(p=>`<div class="mc"><div class="ml">${p}</div><div class="mv">${byP[p]||0}</div><div class="ms">명</div></div>`).join('')+`<div class="mc"><div class="ml">전체</div><div class="mv">${gFiltered.length}</div><div class="ms">명</div></div>`;
+  const sorted=[...rows].sort((a,b)=>(pO.indexOf(a.pos)-pO.indexOf(b.pos))||((a.num||999)-(b.num||999)));
+  gid('roster-list').innerHTML=sorted.length?sorted.map(r=>{
+    const c=posColors[r.pos]||['#F1EFE8','#5F5E5A'];
+    const gBadge=r.gender==='female'?'<span style="font-size:10px;background:#FCEBEB;color:#A32D2D;padding:1px 6px;border-radius:99px;margin-left:4px">여</span>':'<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:99px;margin-left:4px">남</span>';
+    return`<div class="player-row"><div class="player-info-block"><div class="avatar" style="background:${c[0]};color:${c[1]}">${r.name.slice(0,2)}</div><div><div class="player-name">${r.num?'#'+r.num+' ':''}${r.name} ${gBadge}</div><div class="player-meta">${r.pos} · ${r.grade||'학년미정'} ${r.height?'· '+r.height+'cm':''} ${r.reach?'· 타점 '+r.reach+'cm':''}</div>${r.memo?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${r.memo}</div>`:''}</div></div><div class="action-btns"><button class="btn btn-sm" onclick="editRoster('${r.id}')">수정</button><button class="btn btn-sm" onclick="delRoster('${r.id}')" style="color:var(--red)">삭제</button></div></div>`;
+  }).join(''):'<div class="empty">선수가 없습니다.</div>';
+}
+function calMove(d){calM+=d;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}selDate=null;renderCalendar();}
+function renderCalendar(){
+  const mn=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  gid('cal-label').textContent=calY+'년 '+mn[calM];
+  const first=new Date(calY,calM,1),last=new Date(calY,calM+1,0),today=new Date().toISOString().slice(0,10),dow=first.getDay();
+  let html=['일','월','화','수','목','금','토'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  const pL=new Date(calY,calM,0).getDate();
+  for(let i=0;i<dow;i++)html+=`<div class="cal-day other"><div class="dnum">${pL-dow+1+i}</div></div>`;
+  for(let d=1;d<=last.getDate();d++){
+    const ds=calY+'-'+String(calM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const evts=db.events.filter(e=>fmtDate(e.date)===ds);
+    const cls='cal-day'+(ds===today?' today':'')+(ds===selDate?' selected':'');
+    const dots=evts.slice(0,2).map(e=>`<div class="edot e-${(e.type||'other').split(',')[0]}">${e.title}</div>`).join('')+(evts.length>2?`<div style="font-size:10px;color:var(--text3)">+${evts.length-2}개</div>`:'');
+    html+=`<div class="${cls}" onclick="selDay('${ds}')" ondblclick="openMoDay('${ds}')"><div class="dnum">${d}</div>${dots}</div>`;
+  }
+  const rem=(7-(dow+last.getDate())%7)%7;
+  for(let i=1;i<=rem;i++)html+=`<div class="cal-day other"><div class="dnum">${i}</div></div>`;
+  gid('cal-grid').innerHTML=html;
+  renderMonthEvts();
+  if(selDate)showDayEvts(selDate);
+}
+function selDay(ds){selDate=ds;renderCalendar();}
+function openMoDay(ds){eids.event=null;gid('ev-modal-title').textContent='일정 추가';clr(['ev-title','ev-loc','ev-memo','ev-time']);gid('ev-date').value='';gid('ev-date-input').value='';if(gid('ev-date-tags'))gid('ev-date-tags').innerHTML='';['training','match','tournament','meeting','other'].forEach(t=>{if(gid('ev-t-'+t))gid('ev-t-'+t).checked=(t==='training');});gid('mo-event').classList.add('open');setTimeout(()=>{gid('ev-date-input').value=ds;addEvDate();},50);}
+function showDayEvts(ds){
+  const evts=db.events.filter(e=>fmtDate(e.date)===ds).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  const dn=['일','월','화','수','목','금','토'],d=new Date(ds);
+  gid('sel-date-lbl').textContent=ds+' ('+dn[d.getDay()]+')';
+  gid('day-events').innerHTML=evts.length?evts.map(e=>{const c=evtCols[(e.type||'other').split(',')[0]]||evtCols.other;const typeLbls=(e.type||'other').split(',').map(t=>(evtCols[t]||evtCols.other).lbl).join('+');return`<div class="evt-item" style="justify-content:space-between"><div style="display:flex;gap:10px"><div class="evt-bar" style="background:${c.bar}"></div><div class="evt-body"><div class="evt-title">${e.title} <span class="badge" style="background:${c.bg};color:${c.text}">${typeLbls}</span></div><div class="evt-meta">${e.time||'시간 미정'} ${e.loc?'· '+e.loc:''}</div>${e.memo?`<div style="font-size:11px;color:var(--text2);margin-top:4px">${e.memo}</div>`:''}</div></div><div class="action-btns"><button class="btn btn-sm" onclick="editEvent('${e.id}')">수정</button><button class="btn btn-sm" onclick="delEvent('${e.id}')" style="color:var(--red)">삭제</button></div></div>`;}).join(''):'<div class="empty" style="padding:16px">일정이 없습니다.</div>';
+}
+function renderMonthEvts(){
+  const ms=calY+'-'+String(calM+1).padStart(2,'0');
+  const evts=db.events.filter(e=>fmtDate(e.date).startsWith(ms)).sort((a,b)=>fmtDate(a.date).localeCompare(fmtDate(b.date)));
+  gid('month-events').innerHTML=evts.length?evts.map(e=>{const c=evtCols[(e.type||'other').split(',')[0]]||evtCols.other;return`<div class="evt-item"><div class="evt-bar" style="background:${c.bar}"></div><div class="evt-body"><div class="evt-title">${fmtDate(e.date).slice(8)}일 · ${e.title}</div><div class="evt-meta">${e.time||''} ${e.loc?'· '+e.loc:''}</div></div><div class="action-btns"><button class="btn btn-sm" onclick="editEvent('${e.id}')">수정</button><button class="btn btn-sm" onclick="delEvent('${e.id}')" style="color:var(--red)">삭제</button></div></div>`;}).join(''):'<div class="empty" style="padding:16px">이달 일정이 없습니다.</div>';
+}
+function addEvDate(){
+  const inp=gid('ev-date-input'),val=inp.value;
+  if(!val){toast('날짜를 선택하세요.','error');return;}
+  const container=gid('ev-date-tags');
+  const existing=[...container.querySelectorAll('.ev-date-tag')].map(t=>t.dataset.date);
+  if(existing.includes(val)){toast('이미 추가된 날짜입니다.','error');return;}
+  const tag=document.createElement('span');
+  tag.className='ev-date-tag';tag.dataset.date=val;
+  tag.style.cssText='display:inline-flex;align-items:center;gap:4px;background:var(--blue-bg);color:var(--blue);padding:3px 10px;border-radius:99px;font-size:12px;font-weight:500';
+  tag.innerHTML=val+' <button type="button" onclick="this.parentNode.remove();updateEvDateHidden()" style="background:none;border:none;cursor:pointer;color:inherit;font-size:14px;line-height:1;padding:0">×</button>';
+  container.appendChild(tag);updateEvDateHidden();inp.value='';
+}
+function updateEvDateHidden(){
+  gid('ev-date').value=[...document.querySelectorAll('.ev-date-tag')].map(t=>t.dataset.date).join(',');
+}
+function toast(msg,type=''){
+  const w=gid('toast-wrap');if(!w)return;
+  const t=document.createElement('div');t.className='toast'+(type?' '+type:'');t.textContent=msg;
+  w.appendChild(t);setTimeout(()=>t.remove(),3000);
+}
+let ovCharts=[null,null,null,null];
+function refreshOvPlayerSel(){
+  const allNames=[
+    ...gFilter(db.roster).map(r=>r.name),
+    ...gFilter(db.training).map(d=>d.name),
+    ...gFilter(db.match).map(d=>d.name),
+    ...gFilter(db.tournament).map(d=>d.name),
+  ];
+  const names=[...new Set(allNames)].sort();
+  const sel=gid('ov-player'),cur=sel.value;
+  sel.innerHTML='<option value="">선수 선택</option>'+names.map(n=>`<option ${n===cur?'selected':''}>${n}</option>`).join('');
+  if(cur)renderPlayerChart();
+}
+const r1=v=>v===null||v===undefined?null:Math.round(v*10)/10;
+const pct=(n,d)=>d>0?r1(n/d*100):null;
+const posMetrics={
+  '아웃사이드 히터':[{key:'ae',label:'공격효율',color:'#1D9E75',calc:d=>pct(d.attS-d.attE,d.att)},{key:'ar',label:'공격성공률',color:'#185FA5',calc:d=>pct(d.attS,d.att)},{key:'srvA',label:'서브에이스',color:'#854F0B',calc:d=>d.srvA},{key:'rr',label:'리시브성공률',color:'#3C3489',calc:d=>pct(d.rcvOk,d.rcvAtt)}],
+  '미들블로커':[{key:'ae',label:'공격효율',color:'#1D9E75',calc:d=>pct(d.attS-d.attE,d.att)},{key:'ar',label:'공격성공률',color:'#185FA5',calc:d=>pct(d.attS,d.att)},{key:'srvA',label:'서브에이스',color:'#854F0B',calc:d=>d.srvA},{key:'errP',label:'개인실책',color:'#A32D2D',calc:d=>d.errP}],
+  '아포짓 스파이커':[{key:'ae',label:'공격효율',color:'#1D9E75',calc:d=>pct(d.attS-d.attE,d.att)},{key:'ar',label:'공격성공률',color:'#185FA5',calc:d=>pct(d.attS,d.att)},{key:'srvA',label:'서브에이스',color:'#854F0B',calc:d=>d.srvA},{key:'srvE',label:'서브범실',color:'#A32D2D',calc:d=>d.srvE}],
+  '세터':[{key:'srvA',label:'서브에이스',color:'#1D9E75',calc:d=>d.srvA},{key:'srvE',label:'서브범실',color:'#A32D2D',calc:d=>d.srvE},{key:'rr',label:'리시브성공률',color:'#185FA5',calc:d=>pct(d.rcvOk,d.rcvAtt)},{key:'dr',label:'디그성공률',color:'#3C3489',calc:d=>pct(d.digOk,d.digAtt)}],
+  '리베로':[{key:'rr',label:'리시브성공률',color:'#1D9E75',calc:d=>pct(d.rcvOk,d.rcvAtt)},{key:'rcvE',label:'리시브범실',color:'#A32D2D',calc:d=>d.rcvE},{key:'dr',label:'디그성공률',color:'#185FA5',calc:d=>pct(d.digOk,d.digAtt)},{key:'digAtt',label:'디그시도',color:'#854F0B',calc:d=>d.digAtt}],
+};
+const defaultMetrics=[{key:'ae',label:'공격효율',color:'#1D9E75',calc:d=>pct(d.attS-d.attE,d.att)},{key:'ar',label:'공격성공률',color:'#185FA5',calc:d=>pct(d.attS,d.att)},{key:'rr',label:'리시브성공률',color:'#3C3489',calc:d=>pct(d.rcvOk,d.rcvAtt)},{key:'dr',label:'디그성공률',color:'#854F0B',calc:d=>pct(d.digOk,d.digAtt)}];
+function renderPlayerChart(){
+  const name=gid('ov-player').value,chartType=gid('ov-chart-type').value,empty=gid('ov-player-empty');
+  if(!name){empty.style.display='block';return;}
+  empty.style.display='none';
+  const ro=db.roster.find(r=>r.name===name);
+  const metrics=(ro&&posMetrics[ro.pos])||defaultMetrics;
+  const trainRows=db.training.filter(d=>d.name===name).map(d=>({...d,_src:'훈련'}));
+  const matchRows=db.match.filter(d=>d.name===name).map(d=>({...d,_src:'교류전'}));
+  const tourRows=db.tournament.filter(d=>d.name===name).map(d=>({...d,_src:'대회'}));
+  const rows=[...trainRows,...matchRows,...tourRows].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const metricsHtml=metrics.map(m=>{const vals=rows.map(d=>m.calc(d)).filter(v=>v!==null&&v!==undefined);const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;const isPercent=['ae','ar','rr','dr'].includes(m.key);return`<div class="mc"><div class="ml">${m.label} (평균)</div><div class="mv" style="color:${m.color}">${avg.toFixed(1)}${isPercent?'%':''}</div><div class="ms">${vals.length}회 기록</div></div>`;}).join('');
+  gid('ov-player-metrics').innerHTML=`<div class="mg">${metricsHtml}</div>`;
+  let labels,datasets_data;
+  if(chartType==='monthly'){
+    const months=[1,2,3,4,5,6,7,8,9,10,11,12];labels=months.map(m=>m+'월');
+    datasets_data=metrics.map(m=>months.map(mo=>{const mrows=rows.filter(d=>parseInt((d.date||'').slice(5,7))===mo);if(!mrows.length)return null;const vals=mrows.map(d=>m.calc(d)).filter(v=>v!==null&&v!==undefined);return vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10:null;}));
+  }else{
+    labels=rows.map(d=>d.date||d.month+'월');
+    datasets_data=metrics.map(m=>rows.map(d=>{const v=m.calc(d);return v!==null&&v!==undefined?Math.round(v*10)/10:null;}));
+  }
+  metrics.forEach((m,i)=>{
+    const titleEl=document.getElementById('ov-chart'+(i+1)+'-title');if(titleEl)titleEl.textContent=m.label;
+    if(ovCharts[i])ovCharts[i].destroy();
+    const isPercent=['ae','ar','rr','dr'].includes(m.key);
+    ovCharts[i]=new Chart(gid('ovChart'+(i+1)),{type:'line',data:{labels,datasets:[{label:m.label,data:datasets_data[i],borderColor:m.color,backgroundColor:m.color+'18',tension:.3,pointRadius:4,fill:true,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>parseFloat(v).toFixed(1)+(isPercent?'%':'')}}}}});
+  });
+}
+function setGender(g){
+  currentGender=g;
+  ['all','male','female'].forEach(x=>{const btn=gid('gender-'+x);if(btn)btn.classList.toggle('active',x===g);});
+  const activeTab=document.querySelector('.tc.active');
+  if(activeTab){const tabName=activeTab.id.replace('tab-','');if(tabName==='overview')renderOverview();if(tabName==='training')renderTraining();if(tabName==='match')renderMatchTab();if(tabName==='tournament')renderTournamentTab();if(tabName==='pstat')refreshPSel();if(tabName==='roster')renderRoster();}
+  refreshOvPlayerSel();
+}
+function gFilter(arr){
+  if(currentGender==='all')return arr;
+  return arr.filter(d=>{if(d.gender)return d.gender===currentGender;const ro=db.roster.find(r=>r.name===d.name);return ro?(ro.gender||'male')===currentGender:true;});
+}
+function setOvTab(tab){
+  currentOvTab=tab;
+  ['training','match','tournament'].forEach(t=>{
+    const btn=gid('ov-tab-'+t);
+    if(btn){btn.className=t===tab?'btn btn-p':'btn';btn.style.fontSize='12px';}
+  });
+  renderOverview();
+}
+async function saveTournament(){
+  const name=gs('tour-name'),opp=gs('tour-opp'),date=gs('tour-date');
+  if(!name||!opp||!date){toast('날짜, 대회명, 선수명을 입력하세요.','error');return;}
+  const attE=gv('tour-att-e'),srvE=gv('tour-srv-e'),rcvE=gv('tour-rcv-e'),errP=gv('tour-err-p');
+  const data={date,opp,result:gs('tour-result'),name,pos:gs('tour-pos'),att:gv('tour-att'),attS:gv('tour-att-s'),attE,srvA:gv('tour-srv-a'),srvE,rcvS:0,rcvE,rcvOk:gv('tour-rcv-ok'),rcvAtt:gv('tour-rcv-att'),digAtt:gv('tour-dig-att'),digOk:gv('tour-dig-ok'),errT:attE+srvE+rcvE+errP,errP};
+  setBtn('tour-save-btn',true);
+  const {data:newId, error}=await callWriteRpc('add_tournament',{p_team_id:TEAM_ID, p_payload:data});
+  if(!error){data.id=newId;db.tournament.push(data);toast('대회 데이터 저장됨','success');closeMo('tournament');renderTournamentTab();}
+  else toast('저장 실패: '+error.message,'error');
+  setBtn('tour-save-btn',false);
+}
+async function delTournament(id){
+  if(!confirm('삭제하시겠습니까?'))return;
+  const {error}=await callWriteRpc('delete_tournament',{p_team_id:TEAM_ID, p_id:id});
+  if(error){toast('삭제 실패: '+error.message,'error');return;}
+  db.tournament=db.tournament.filter(d=>String(d.id)!==String(id));
+  renderTournamentTab();toast('삭제됨');
+}
+function renderTournamentTab(){
+  const rows=[...gFilter(db.tournament)].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const tbody=gid('tour-tbody');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="19" class="empty">대회 데이터가 없습니다.</td></tr>';return;}
+  tbody.innerHTML=rows.map(d=>{const s=cs(d);const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';return`<tr><td>${d.date}</td><td>${d.opp}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${d.name}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delTournament('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;}).join('');
+}
+loadAll();
+</script>
+</body>
+</html>
