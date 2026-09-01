@@ -88,6 +88,8 @@ tbody tr:hover{background:var(--bg2)}
 .player-meta{font-size:12px;color:var(--text2);margin-top:2px}
 .cal-wrap{display:grid;grid-template-columns:1fr 320px;gap:16px}
 @media(max-width:768px){.cal-wrap{grid-template-columns:1fr}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
 .cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .cal-nav button{background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);padding:6px 12px;cursor:pointer;font-size:14px}
 .cal-month-lbl{font-size:16px;font-weight:700;flex:1}
@@ -219,11 +221,11 @@ body.locked .gate-wrap{display:flex}
       <button id="ov-tab-tournament" class="btn" onclick="setOvTab('tournament')" style="font-size:12px"> 대회 통계</button>
     </div>
     <div class="mg" id="ov-metrics"><div class="loading"><div class="spinner"></div>불러오는 중...</div></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="grid2" style="margin-bottom:16px">
       <div class="card"><div class="card-title">공격 효율 추이 (월별)</div><div style="position:relative;height:200px"><canvas id="attackChart">월별 공격 효율 차트</canvas></div></div>
       <div class="card"><div class="card-title">리시브 성공률 추이 (월별)</div><div style="position:relative;height:200px"><canvas id="receiveChart">월별 리시브 성공률 차트</canvas></div></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="grid2" style="margin-bottom:16px">
       <div class="card"><div class="card-title">최근 교류전</div><div id="ov-matches"><div class="loading"><div class="spinner"></div></div></div></div>
       <div class="card"><div class="card-title">이달 일정</div><div id="ov-schedule"><div class="loading"><div class="spinner"></div></div></div></div>
     </div>
@@ -239,7 +241,7 @@ body.locked .gate-wrap{display:flex}
         </select>
       </div>
       <div id="ov-player-metrics" style="margin-bottom:16px"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="grid2">
         <div><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px" id="ov-chart1-title">-</div><div style="position:relative;height:180px"><canvas id="ovChart1">차트1</canvas></div></div>
         <div><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px" id="ov-chart2-title">-</div><div style="position:relative;height:180px"><canvas id="ovChart2">차트2</canvas></div></div>
         <div><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px" id="ov-chart3-title">-</div><div style="position:relative;height:180px"><canvas id="ovChart3">차트3</canvas></div></div>
