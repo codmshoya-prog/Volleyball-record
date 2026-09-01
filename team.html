@@ -193,8 +193,8 @@ body.locked .gate-wrap{display:flex}
   <div class="banner" id="setup-banner" style="display:none">
     <div style="font-size:20px">⚠️</div>
     <div>
-      <h3>팀을 찾을 수 없습니다</h3>
-      <p>URL의 <code>?team=</code> 값을 확인해주세요. <a href="./index.html">팀 목록으로 돌아가기</a></p>
+      <h3>팀 주소가 없습니다</h3>
+      <p>URL의 <code>?team=</code> 값을 확인해주세요. <a href="./index.html">메인으로 돌아가기</a></p>
     </div>
   </div>
   <div id="tab-overview" class="tc active">
@@ -466,6 +466,38 @@ let TEAM_ID = null;
 let TEAM_NAME = '';
 let editCode = '';
 
+// ── 팀 목록은 더 이상 공개 조회하지 않음: 슬러그+코드를 함께 아는 사람만 팀을 확인/추가할 수 있음 ──
+const MY_TEAMS_KEY='volleyball_my_teams';
+function saveMyTeam(id, slug, name){
+  try{
+    let list = JSON.parse(localStorage.getItem(MY_TEAMS_KEY)||'[]');
+    list = list.filter(t=>t.id!==id);
+    list.push({id, slug, name});
+    localStorage.setItem(MY_TEAMS_KEY, JSON.stringify(list));
+  }catch(e){}
+}
+function updateMyTeamName(id, name){
+  try{
+    let list = JSON.parse(localStorage.getItem(MY_TEAMS_KEY)||'[]');
+    list = list.map(t=>t.id===id?{...t,name}:t);
+    localStorage.setItem(MY_TEAMS_KEY, JSON.stringify(list));
+  }catch(e){}
+}
+function removeMyTeam(id){
+  try{
+    let list = JSON.parse(localStorage.getItem(MY_TEAMS_KEY)||'[]');
+    list = list.filter(t=>t.id!==id);
+    localStorage.setItem(MY_TEAMS_KEY, JSON.stringify(list));
+  }catch(e){}
+}
+// 이 탭에서 이미 코드를 확인한 팀은 슬러그 기준으로 세션에 잠깐 기억해둔다 (탭을 닫으면 사라짐)
+function teamCacheKey(slug){ return 'team_session_'+String(slug||'').toLowerCase(); }
+function getTeamCache(slug){
+  try{ const raw = sessionStorage.getItem(teamCacheKey(slug)); return raw?JSON.parse(raw):null; }catch(e){ return null; }
+}
+function setTeamCache(slug, obj){ try{ sessionStorage.setItem(teamCacheKey(slug), JSON.stringify(obj)); }catch(e){} }
+function clearTeamCache(slug){ sessionStorage.removeItem(teamCacheKey(slug)); }
+
 const posColors={'세터':['#EEEDFE','#3C3489'],'아웃사이드 히터':['#E6F1FB','#185FA5'],'미들블로커':['#FAEEDA','#854F0B'],'아포짓 스파이커':['#EAF3DE','#3B6D11'],'리베로':['#FBEAF0','#72243E']};
 const evtCols={training:{bg:'#EAF3DE',text:'#27500A',bar:'#3B6D11',lbl:'훈련'},match:{bg:'#E6F1FB',text:'#0C447C',bar:'#185FA5',lbl:'교류전'},tournament:{bg:'#FCEBEB',text:'#791F1F',bar:'#A32D2D',lbl:'대회'},meeting:{bg:'#FAEEDA',text:'#633806',bar:'#854F0B',lbl:'회의'},other:{bg:'#EEEDFE',text:'#26215C',bar:'#3C3489',lbl:'기타'}};
 let db={roster:[],training:[],match:[],tournament:[],events:[]};
@@ -495,7 +527,8 @@ async function renameTeam(){
   TEAM_NAME = newName.trim();
   document.title='배구부 데이터 분석 - '+TEAM_NAME;
   gid('team-title').textContent=TEAM_NAME;
-  gid('gate-title').textContent=TEAM_NAME+' - 비공개 팀 페이지';
+  setTeamCache(TEAM_PARAM, {id:TEAM_ID, name:TEAM_NAME, code:editCode});
+  updateMyTeamName(TEAM_ID, TEAM_NAME);
   toast('팀 이름이 변경되었습니다.','success');
 }
 async function changeCode(){
@@ -507,7 +540,7 @@ async function changeCode(){
   const {data, error} = await sb.rpc('change_team_code',{p_team_id:TEAM_ID, p_old_code:oldCode, p_new_code:newCode});
   if(error || !data){ toast('코드 변경 실패: '+(error?error.message:'현재 코드가 올바르지 않습니다.'),'error'); return; }
   editCode = newCode;
-  sessionStorage.setItem('editCode_'+TEAM_ID, editCode);
+  setTeamCache(TEAM_PARAM, {id:TEAM_ID, name:TEAM_NAME, code:editCode});
   toast('코드가 변경되었습니다.','success');
 }
 async function deleteTeam(){
@@ -516,14 +549,15 @@ async function deleteTeam(){
   if(!code) return;
   const {data, error} = await sb.rpc('delete_team',{p_team_id:TEAM_ID, p_code:code});
   if(error || !data){ toast('삭제 실패: '+(error?error.message:'코드가 올바르지 않습니다.'),'error'); return; }
-  sessionStorage.removeItem('editCode_'+TEAM_ID);
+  clearTeamCache(TEAM_PARAM);
+  removeMyTeam(TEAM_ID);
   alert('팀이 삭제되었습니다.');
   location.href='./index.html';
 }
 function toggleLock(){
   if(!editCode) return;
   if(confirm('이 기기에서 팀 코드를 잊고 다시 잠글까요? (조회하려면 코드를 다시 입력해야 합니다)')){
-    sessionStorage.removeItem('editCode_'+TEAM_ID);
+    clearTeamCache(TEAM_PARAM);
     location.reload();
   }
 }
@@ -533,7 +567,7 @@ async function callWriteRpc(fnName, params){
   params.p_code = editCode;
   let {data, error} = await sb.rpc(fnName, params);
   if(error && /코드/.test(error.message||'')){
-    sessionStorage.removeItem('editCode_'+TEAM_ID);
+    clearTeamCache(TEAM_PARAM);
     toast('팀 코드가 더 이상 유효하지 않습니다. 새로고침 후 다시 입력해주세요.','error');
   }
   return {data, error};
@@ -552,15 +586,6 @@ function numify(d){
   if(d.date&&!d.month)d.month=parseInt(d.date.slice(5,7))||0;
   if(d.gender!==undefined)d.gender=String(d.gender||'male').trim()||'male';
   return d;
-}
-async function resolveTeam(){
-  if(!TEAM_PARAM) return false;
-  const isUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(TEAM_PARAM);
-  const q = sb.from('teams').select('id,name,slug');
-  const {data, error} = isUuid ? await q.eq('id',TEAM_PARAM).maybeSingle() : await q.ilike('slug',TEAM_PARAM).maybeSingle();
-  if(error || !data) return false;
-  TEAM_ID = data.id; TEAM_NAME = data.name;
-  return true;
 }
 // 코드로 실제 데이터를 가져온다 (모든 조회는 RPC를 통해서만 가능)
 async function fetchAllData(code){
@@ -584,38 +609,60 @@ function hideGate(){
   const now=new Date();calY=now.getFullYear();calM=now.getMonth();
   renderOverview();refreshPSel();
 }
+// 슬러그 또는 팀 이름 + 코드로 팀을 찾고 검증한다. 존재하지 않는 팀과 코드 오류는
+// 항상 같은 에러 메시지를 반환해서, 어떤 팀이 있는지 추측할 수 없게 한다.
+async function joinTeam(identifier, code){
+  const {data, error} = await sb.rpc('join_team', {p_identifier: identifier, p_code: code});
+  if(error || !data || !data.length) return null;
+  return data[0]; // {id, name, slug}
+}
 async function submitGateCode(){
   const input = gid('gate-code-input').value;
   const errEl = gid('gate-error');
   errEl.textContent='';
+  if(!TEAM_PARAM){ errEl.textContent='팀 주소가 없습니다.'; return; }
   if(!input){ errEl.textContent='코드를 입력하세요.'; return; }
   const btn = gid('gate-submit-btn'); btn.textContent='확인 중...'; btn.disabled=true;
+  const team = await joinTeam(TEAM_PARAM, input);
+  if(!team){
+    btn.textContent='확인'; btn.disabled=false;
+    errEl.textContent='팀 이름 또는 코드가 올바르지 않습니다.';
+    return;
+  }
+  TEAM_ID = team.id; TEAM_NAME = team.name;
   const ok = await fetchAllData(input);
   btn.textContent='확인'; btn.disabled=false;
-  if(!ok){ errEl.textContent='코드가 올바르지 않습니다.'; return; }
+  if(!ok){ errEl.textContent='데이터를 불러오지 못했습니다. 다시 시도해주세요.'; TEAM_ID=null; TEAM_NAME=''; return; }
   editCode = input;
-  sessionStorage.setItem('editCode_'+TEAM_ID, editCode);
+  setTeamCache(team.slug, {id:TEAM_ID, name:TEAM_NAME, code:editCode});
+  saveMyTeam(TEAM_ID, team.slug, TEAM_NAME);
+  document.title='배구부 데이터 분석 - '+TEAM_NAME;
+  gid('team-title').textContent=TEAM_NAME;
   hideGate();
 }
 async function loadAll(){
   const st=document.getElementById('conn-status');
   const bn=document.getElementById('setup-banner');
-  const ok = await resolveTeam();
-  if(!ok){
+  if(!TEAM_PARAM){
     st.textContent='팀 없음';st.style.background='#FCEBEB';st.style.color='#A32D2D';
     document.body.classList.remove('locked');
     bn.style.display='flex';
     const now=new Date();calY=now.getFullYear();calM=now.getMonth();
     return;
   }
-  document.title='배구부 데이터 분석 - '+TEAM_NAME;
-  gid('team-title').textContent=TEAM_NAME;
-  gid('gate-title').textContent=TEAM_NAME+' - 비공개 팀 페이지';
-  const stored = sessionStorage.getItem('editCode_'+TEAM_ID);
-  if(stored){
-    const ok2 = await fetchAllData(stored);
-    if(ok2){ editCode=stored; hideGate(); return; }
-    sessionStorage.removeItem('editCode_'+TEAM_ID);
+  st.textContent='코드 필요';
+  const cache = getTeamCache(TEAM_PARAM);
+  if(cache && cache.id && cache.code){
+    TEAM_ID = cache.id; TEAM_NAME = cache.name; editCode = cache.code;
+    const ok2 = await fetchAllData(cache.code);
+    if(ok2){
+      document.title='배구부 데이터 분석 - '+TEAM_NAME;
+      gid('team-title').textContent=TEAM_NAME;
+      hideGate();
+      return;
+    }
+    clearTeamCache(TEAM_PARAM);
+    TEAM_ID=null; TEAM_NAME=''; editCode='';
   }
   showGate();
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>배구부 데이터 분석 - 팀 찾기</title>
+<title>배구부 데이터 분석 - 내 팀</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -28,21 +28,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;back
 .btn:hover{background:var(--bg2)}
 .btn-p{background:var(--text);color:var(--bg);border-color:var(--text)}
 .btn-p:hover{opacity:.85}
-.content{max-width:960px;margin:0 auto;padding:28px 16px 60px}
+.content{max-width:960px;margin:0 auto;padding:28px 16px 100px}
 .section-title{font-size:14px;font-weight:700;color:var(--text2);margin-bottom:12px;display:flex;align-items:center;gap:6px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:32px}
 .card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;cursor:pointer;transition:box-shadow .15s,border-color .15s;position:relative;text-decoration:none;color:inherit;display:block}
 .card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:var(--border2)}
 .card-name{font-size:15px;font-weight:700;margin-bottom:4px;padding-right:28px}
 .card-meta{font-size:12px;color:var(--text3)}
-.star-btn{position:absolute;top:14px;right:14px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3);line-height:1;padding:2px}
-.star-btn.on{color:#E8A93C}
-.empty{text-align:center;padding:50px 20px;color:var(--text3);font-size:14px}
-.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:50px;color:var(--text2)}
-.spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.fab{position:fixed;bottom:28px;right:28px;z-index:100}
-.fab button{padding:14px 22px;font-size:14px;border-radius:99px;box-shadow:0 4px 16px rgba(0,0,0,.18)}
+.remove-btn{position:absolute;top:12px;right:12px;background:none;border:none;font-size:16px;cursor:pointer;color:var(--text3);line-height:1;padding:4px;border-radius:6px}
+.remove-btn:hover{color:var(--red);background:var(--red-bg)}
+.empty{text-align:center;padding:50px 20px;color:var(--text3);font-size:14px;line-height:1.7}
+.actions{position:fixed;bottom:28px;right:28px;z-index:100;display:flex;gap:10px}
+.actions button{padding:14px 20px;font-size:14px;border-radius:99px;box-shadow:0 4px 16px rgba(0,0,0,.18)}
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:20px}
 .overlay.open{display:flex}
 .modal{background:var(--bg);border-radius:var(--radius-lg);width:min(440px,100%);padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)}
@@ -65,26 +62,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;back
 <div class="header">
   <div class="header-inner">
     <h1>🏐 배구부 데이터 분석</h1>
-    <p>팀을 검색하거나 즐겨찾기에서 빠르게 찾아보세요.</p>
+    <p>내가 추가한 팀만 여기에 보여요. 팀 이름(또는 주소)과 코드를 아는 사람만 팀을 확인할 수 있어요.</p>
     <div class="search-row">
-      <input id="search" type="text" placeholder="팀/학교 이름으로 검색..." oninput="render()"/>
+      <input id="search" type="text" placeholder="내 팀 중에서 검색..." oninput="render()"/>
     </div>
   </div>
 </div>
 <div class="content">
-  <div id="fav-section" style="display:none">
-    <div class="section-title">⭐ 즐겨찾기</div>
-    <div class="grid" id="fav-grid"></div>
-  </div>
-  <div class="section-title">전체 팀</div>
-  <div class="grid" id="team-grid"><div class="loading"><div class="spinner"></div>불러오는 중...</div></div>
+  <div class="section-title">내 팀</div>
+  <div class="grid" id="team-grid"></div>
 </div>
-<div class="fab"><button class="btn btn-p" onclick="openRegister()">+ 팀 등록</button></div>
+<div class="actions">
+  <button class="btn" onclick="openJoin()">+ 팀 추가</button>
+  <button class="btn btn-p" onclick="openRegister()">+ 새 팀 만들기</button>
+</div>
 <div class="toast-wrap" id="toast-wrap"></div>
+
+<div class="overlay" id="mo-join">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title">내 팀 추가</span><button class="x-btn" onclick="closeJoin()">×</button></div>
+    <div class="fgrp">
+      <label>팀 이름 또는 URL 주소 *</label>
+      <input id="join-identifier" placeholder="예: OO대학교 배구부 또는 oo-univ-vb" onkeydown="if(event.key==='Enter')gid('join-code').focus()"/>
+    </div>
+    <div class="fgrp">
+      <label>팀 코드 *</label>
+      <input id="join-code" type="password" placeholder="편집 비밀번호(코드)" onkeydown="if(event.key==='Enter')submitJoin()"/>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeJoin()">취소</button><button class="btn btn-p" id="join-save-btn" onclick="submitJoin()">추가하기</button></div>
+  </div>
+</div>
 
 <div class="overlay" id="mo-register">
   <div class="modal">
-    <div class="modal-hd"><span class="modal-title">새 팀 등록</span><button class="x-btn" onclick="closeRegister()">×</button></div>
+    <div class="modal-hd"><span class="modal-title">새 팀 만들기</span><button class="x-btn" onclick="closeRegister()">×</button></div>
     <div class="fgrp">
       <label>팀/학교 이름 *</label>
       <input id="reg-name" placeholder="예: OO대학교 배구부" oninput="suggestSlug()"/>
@@ -111,54 +122,72 @@ const SUPABASE_URL = 'https://rrglljipaothpvswqzkm.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyZ2xsamlwYW90aHB2c3dxemttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNDA0NjcsImV4cCI6MjEwMzgxNjQ2N30.53AN3JbmiKiTLB2RvqpWxgcz-8raIr0qpxpzIQHNtOI';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let teams = [];
-const FAV_KEY = 'volleyball_favorite_teams';
+const MY_TEAMS_KEY = 'volleyball_my_teams';
 
 function gid(id){return document.getElementById(id);}
-function getFavs(){ try{ return JSON.parse(localStorage.getItem(FAV_KEY)||'[]'); }catch(e){ return []; } }
-function setFavs(arr){ localStorage.setItem(FAV_KEY, JSON.stringify(arr)); }
-function isFav(id){ return getFavs().includes(id); }
-function toggleFav(id, ev){
+
+// ── 내가 추가한 팀 (이 브라우저에만 저장됨, 다른 팀 목록은 애초에 조회 불가) ──
+function myTeams(){ try{ return JSON.parse(localStorage.getItem(MY_TEAMS_KEY)||'[]'); }catch(e){ return []; } }
+function saveMyTeam(id, slug, name){
+  let list = myTeams().filter(t=>t.id!==id);
+  list.push({id, slug, name});
+  localStorage.setItem(MY_TEAMS_KEY, JSON.stringify(list));
+}
+function removeMyTeamLocal(id, ev){
   if(ev){ ev.preventDefault(); ev.stopPropagation(); }
-  let favs = getFavs();
-  if(favs.includes(id)) favs = favs.filter(x=>x!==id);
-  else favs.push(id);
-  setFavs(favs);
+  if(!confirm('이 팀을 내 목록에서 제거할까요?\n(팀 자체가 삭제되는 것은 아니고, 이 브라우저의 목록에서만 사라져요. 다시 추가하려면 이름/주소와 코드가 필요해요.)')) return;
+  const list = myTeams().filter(t=>t.id!==id);
+  localStorage.setItem(MY_TEAMS_KEY, JSON.stringify(list));
   render();
 }
+// team.html이 다시 코드를 묻지 않도록, 이 탭 세션에 임시로 코드를 같이 넘겨준다.
+function setTeamSession(slug, obj){
+  try{ sessionStorage.setItem('team_session_'+String(slug||'').toLowerCase(), JSON.stringify(obj)); }catch(e){}
+}
 
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function cardHtml(t){
-  const fav = isFav(t.id);
   return `<a class="card" href="./team.html?team=${encodeURIComponent(t.slug)}">
-    <button class="star-btn ${fav?'on':''}" onclick="toggleFav('${t.id}', event)" title="즐겨찾기">${fav?'★':'☆'}</button>
+    <button class="remove-btn" onclick="removeMyTeamLocal('${t.id}', event)" title="목록에서 제거">×</button>
     <div class="card-name">${escapeHtml(t.name)}</div>
     <div class="card-meta">team.html?team=${escapeHtml(t.slug)}</div>
   </a>`;
 }
-function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function render(){
   const q = (gid('search').value||'').trim().toLowerCase();
-  const filtered = teams.filter(t=>t.name.toLowerCase().includes(q));
-  const favIds = getFavs();
-  const favTeams = filtered.filter(t=>favIds.includes(t.id));
-  const restTeams = filtered.filter(t=>!favIds.includes(t.id));
-
-  gid('fav-section').style.display = favTeams.length ? 'block' : 'none';
-  gid('fav-grid').innerHTML = favTeams.map(cardHtml).join('');
-
-  gid('team-grid').innerHTML = restTeams.length
-    ? restTeams.map(cardHtml).join('')
-    : (filtered.length===0 ? `<div class="empty" style="grid-column:1/-1">${q?'검색 결과가 없습니다.':'등록된 팀이 없습니다. 첫 팀을 등록해보세요!'}</div>` : '');
+  const all = myTeams();
+  const filtered = all.filter(t=>t.name.toLowerCase().includes(q));
+  gid('team-grid').innerHTML = filtered.length
+    ? filtered.map(cardHtml).join('')
+    : `<div class="empty" style="grid-column:1/-1">${all.length===0 ? '아직 추가한 팀이 없어요.<br>오른쪽 아래 버튼으로 우리 팀을 추가하거나 새로 만들어보세요!' : '검색 결과가 없습니다.'}</div>`;
 }
 
-async function loadTeams(){
-  const {data, error} = await sb.from('teams').select('id,name,slug,created_at').order('created_at',{ascending:true});
-  if(error){ gid('team-grid').innerHTML = '<div class="empty" style="grid-column:1/-1">팀 목록을 불러오지 못했습니다.</div>'; return; }
-  teams = data || [];
-  render();
+// ── 내 팀 추가 (이미 있는 팀에 들어가기) ──
+function openJoin(){
+  gid('join-identifier').value=''; gid('join-code').value='';
+  gid('mo-join').classList.add('open');
+  gid('join-identifier').focus();
+}
+function closeJoin(){ gid('mo-join').classList.remove('open'); }
+async function submitJoin(){
+  const identifier = gid('join-identifier').value.trim();
+  const code = gid('join-code').value;
+  if(!identifier){ toast('팀 이름 또는 주소를 입력하세요.','error'); return; }
+  if(!code){ toast('코드를 입력하세요.','error'); return; }
+  const btn = gid('join-save-btn'); btn.textContent='확인 중...'; btn.disabled=true;
+  const {data, error} = await sb.rpc('join_team', {p_identifier: identifier, p_code: code});
+  btn.textContent='추가하기'; btn.disabled=false;
+  if(error || !data || !data.length){ toast('팀 이름 또는 코드가 올바르지 않습니다.','error'); return; }
+  const team = data[0];
+  saveMyTeam(team.id, team.slug, team.name);
+  setTeamSession(team.slug, {id:team.id, name:team.name, code});
+  toast('팀이 추가되었습니다!','success');
+  closeJoin();
+  setTimeout(()=>{ location.href = './team.html?team='+encodeURIComponent(team.slug); }, 500);
 }
 
+// ── 새 팀 만들기 ──
 function openRegister(){
   gid('reg-name').value=''; gid('reg-slug').value=''; gid('reg-code').value=''; gid('reg-code2').value='';
   gid('slug-preview').textContent='여기';
@@ -194,16 +223,21 @@ async function submitRegister(){
     else toast('등록 실패: '+error.message,'error');
     return;
   }
+  const team = data[0];
+  saveMyTeam(team.id, team.slug, name);
+  setTeamSession(team.slug, {id:team.id, name, code});
   toast('팀이 등록되었습니다!','success');
-  setTimeout(()=>{ location.href = './team.html?team='+encodeURIComponent(slug); }, 600);
+  closeRegister();
+  setTimeout(()=>{ location.href = './team.html?team='+encodeURIComponent(team.slug); }, 600);
 }
+
 function toast(msg,type=''){
   const w=gid('toast-wrap');
   const t=document.createElement('div');t.className='toast'+(type?' '+type:'');t.textContent=msg;
   w.appendChild(t);setTimeout(()=>t.remove(),3000);
 }
 
-loadTeams();
+render();
 </script>
 </body>
 </html>
