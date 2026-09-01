@@ -154,6 +154,7 @@ body.locked .gate-wrap{display:flex}
     <span class="tag" id="conn-status">연결 중...</span>
     <span class="tag lock" id="lock-status" onclick="toggleLock()" title="클릭해서 로그아웃">🔒 잠김</span>
     <span class="tag lock" id="change-code-btn" onclick="changeCode()" style="display:none">코드 변경</span>
+    <span class="tag lock" id="rename-team-btn" onclick="renameTeam()" style="display:none">이름 변경</span>
     <span class="tag danger" id="delete-team-btn" onclick="deleteTeam()" style="display:none">팀 삭제</span>
     <div style="margin-left:auto;display:flex;gap:8px">
       <button class="btn btn-sm" onclick="openMo('roster')">+ 선수 추가</button>
@@ -481,7 +482,21 @@ function updateLockUI(){
   el.textContent='🔓 코드 확인됨';
   el.title='클릭해서 잠그기(로그아웃)';
   const cc=gid('change-code-btn'); if(cc) cc.style.display='inline-block';
+  const rn=gid('rename-team-btn'); if(rn) rn.style.display='inline-block';
   const dt=gid('delete-team-btn'); if(dt) dt.style.display='inline-block';
+}
+async function renameTeam(){
+  const newName = prompt('새 팀 이름을 입력하세요:', TEAM_NAME);
+  if(!newName || !newName.trim()) return;
+  const code = prompt('편집 코드를 입력하세요:');
+  if(!code) return;
+  const {data, error} = await sb.rpc('rename_team',{p_team_id:TEAM_ID, p_code:code, p_new_name:newName.trim()});
+  if(error || !data){ toast('이름 변경 실패: '+(error?error.message:'코드가 올바르지 않습니다.'),'error'); return; }
+  TEAM_NAME = newName.trim();
+  document.title='배구부 데이터 분석 - '+TEAM_NAME;
+  gid('team-title').textContent=TEAM_NAME;
+  gid('gate-title').textContent=TEAM_NAME+' - 비공개 팀 페이지';
+  toast('팀 이름이 변경되었습니다.','success');
 }
 async function changeCode(){
   const oldCode = prompt('현재 코드를 입력하세요:');
