@@ -28,6 +28,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;back
 .back-link:hover{background:var(--bg2)}
 .tag{font-size:11px;padding:2px 10px;border-radius:99px;font-weight:500;background:var(--blue-bg);color:var(--blue);cursor:default}
 .tag.lock{cursor:pointer}
+.tag.danger{background:var(--red-bg);color:var(--red);cursor:pointer}
 .nav{display:flex;margin-top:10px}
 .nb{padding:9px 16px;font-size:13px;font-weight:400;border:none;background:none;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s}
 .nb:hover{color:var(--text)}
@@ -153,6 +154,7 @@ body.locked .gate-wrap{display:flex}
     <span class="tag" id="conn-status">연결 중...</span>
     <span class="tag lock" id="lock-status" onclick="toggleLock()" title="클릭해서 로그아웃">🔒 잠김</span>
     <span class="tag lock" id="change-code-btn" onclick="changeCode()" style="display:none">코드 변경</span>
+    <span class="tag danger" id="delete-team-btn" onclick="deleteTeam()" style="display:none">팀 삭제</span>
     <div style="margin-left:auto;display:flex;gap:8px">
       <button class="btn btn-sm" onclick="openMo('roster')">+ 선수 추가</button>
       <button class="btn btn-sm btn-p" onclick="openMo('train')">+ 훈련 기록</button>
@@ -479,6 +481,7 @@ function updateLockUI(){
   el.textContent='🔓 코드 확인됨';
   el.title='클릭해서 잠그기(로그아웃)';
   const cc=gid('change-code-btn'); if(cc) cc.style.display='inline-block';
+  const dt=gid('delete-team-btn'); if(dt) dt.style.display='inline-block';
 }
 async function changeCode(){
   const oldCode = prompt('현재 코드를 입력하세요:');
@@ -491,6 +494,16 @@ async function changeCode(){
   editCode = newCode;
   sessionStorage.setItem('editCode_'+TEAM_ID, editCode);
   toast('코드가 변경되었습니다.','success');
+}
+async function deleteTeam(){
+  if(!confirm(`정말로 '${TEAM_NAME}' 팀을 삭제하시겠습니까?\n선수 명단, 훈련/교류전/대회 기록, 일정이 모두 영구 삭제되며 되돌릴 수 없습니다.`)) return;
+  const code = prompt('삭제를 진행하려면 편집 코드를 다시 입력하세요:');
+  if(!code) return;
+  const {data, error} = await sb.rpc('delete_team',{p_team_id:TEAM_ID, p_code:code});
+  if(error || !data){ toast('삭제 실패: '+(error?error.message:'코드가 올바르지 않습니다.'),'error'); return; }
+  sessionStorage.removeItem('editCode_'+TEAM_ID);
+  alert('팀이 삭제되었습니다.');
+  location.href='./index.html';
 }
 function toggleLock(){
   if(!editCode) return;
