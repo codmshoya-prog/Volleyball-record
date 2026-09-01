@@ -22,15 +22,17 @@
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;background:var(--bg3);color:var(--text);font-size:14px}
 .header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:50}
-.header-top{display:flex;align-items:center;gap:12px;padding:14px 0 0}
-.header-top h1{font-size:18px;font-weight:600}
-.back-link{font-size:12px;color:var(--text2);text-decoration:none;padding:4px 8px;border-radius:6px}
+.header-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:14px 0 10px}
+.header-top h1{font-size:18px;font-weight:600;white-space:nowrap}
+.back-link{font-size:12px;color:var(--text2);text-decoration:none;padding:4px 8px;border-radius:6px;white-space:nowrap;flex-shrink:0}
 .back-link:hover{background:var(--bg2)}
-.tag{font-size:11px;padding:2px 10px;border-radius:99px;font-weight:500;background:var(--blue-bg);color:var(--blue);cursor:default}
+.tag{font-size:11px;padding:2px 10px;border-radius:99px;font-weight:500;background:var(--blue-bg);color:var(--blue);cursor:default;white-space:nowrap;flex-shrink:0}
 .tag.lock{cursor:pointer}
 .tag.danger{background:var(--red-bg);color:var(--red);cursor:pointer}
-.nav{display:flex;margin-top:10px}
-.nb{padding:9px 16px;font-size:13px;font-weight:400;border:none;background:none;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s}
+.hdr-actions{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+.hdr-actions .btn{white-space:nowrap;flex-shrink:0}
+.nav{display:flex;margin-top:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.nb{padding:9px 16px;font-size:13px;font-weight:400;border:none;background:none;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;flex-shrink:0}
 .nb:hover{color:var(--text)}
 .nb.active{color:var(--text);border-bottom:2px solid var(--text);font-weight:600}
 .content{max-width:1200px;margin:0 auto;padding:24px 16px 60px}
@@ -144,6 +146,18 @@ body.locked .gate-wrap{display:flex}
 .gate-card input:focus{outline:2px solid var(--blue);outline-offset:1px}
 .gate-card .btn-p{width:100%}
 .gate-error{color:var(--red);font-size:12px;margin-top:8px;min-height:16px}
+
+@media(max-width:640px){
+  .header{padding:0 14px}
+  .content{padding:18px 12px 60px}
+  .header-top{padding:12px 0 8px}
+  .hdr-actions{width:100%;margin-left:0;order:99}
+  .hdr-actions .btn{font-size:12px;padding:7px 10px}
+  .fg{grid-template-columns:1fr}
+  .modal{padding:18px}
+  .mg{grid-template-columns:repeat(2,1fr)}
+  .cal-day{min-height:56px}
+}
 </style>
 </head>
 <body class="locked">
@@ -156,7 +170,7 @@ body.locked .gate-wrap{display:flex}
     <span class="tag lock" id="change-code-btn" onclick="changeCode()" style="display:none">코드 변경</span>
     <span class="tag lock" id="rename-team-btn" onclick="renameTeam()" style="display:none">이름 변경</span>
     <span class="tag danger" id="delete-team-btn" onclick="deleteTeam()" style="display:none">팀 삭제</span>
-    <div style="margin-left:auto;display:flex;gap:8px">
+    <div class="hdr-actions">
       <button class="btn btn-sm" onclick="openMo('roster')">+ 선수 추가</button>
       <button class="btn btn-sm btn-p" onclick="openMo('train')">+ 훈련 기록</button>
       <button class="btn btn-sm btn-p" onclick="openMo('match')">+ 교류전 기록</button>
@@ -164,7 +178,7 @@ body.locked .gate-wrap{display:flex}
       <button class="btn btn-sm" onclick="openMo('event')">+ 일정 추가</button>
     </div>
   </div>
-  <div id="gender-row" style="display:flex;align-items:center;gap:8px;padding:10px 0 0">
+  <div id="gender-row" style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 0 0">
     <button id="gender-all" class="gbtn active" onclick="setGender('all')">전체</button>
     <button id="gender-male" class="gbtn" onclick="setGender('male')"> 남자부</button>
     <button id="gender-female" class="gbtn" onclick="setGender('female')"> 여자부</button>
