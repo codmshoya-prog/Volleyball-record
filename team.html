@@ -29,6 +29,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;back
 .tag{font-size:11px;padding:2px 10px;border-radius:99px;font-weight:500;background:var(--blue-bg);color:var(--blue);cursor:default;white-space:nowrap;flex-shrink:0}
 .tag.lock{cursor:pointer}
 .tag.danger{background:var(--red-bg);color:var(--red);cursor:pointer}
+.hdr-dropdown{position:relative;flex-shrink:0}
+.hdr-dropdown>.tag{border:none;font-family:inherit}
+.dd-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:0 6px 20px rgba(0,0,0,.14);min-width:130px;flex-direction:column;overflow:hidden;z-index:60}
+.dd-menu.open{display:flex}
+.dd-menu button{padding:10px 14px;text-align:left;border:none;background:none;font-size:13px;font-weight:500;cursor:pointer;color:var(--text);white-space:nowrap}
+.dd-menu button:hover{background:var(--bg2)}
+.dd-menu button.danger{color:var(--red)}
 .hdr-actions{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
 .hdr-actions .btn{white-space:nowrap;flex-shrink:0}
 .nav{display:flex;margin-top:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
@@ -169,9 +176,14 @@ body.locked .gate-wrap{display:flex}
     <h1 id="team-title">배구부 데이터 분석</h1>
     <span class="tag" id="conn-status">연결 중...</span>
     <span class="tag lock" id="lock-status" onclick="toggleLock()" title="클릭해서 로그아웃">🔒 잠김</span>
-    <span class="tag lock" id="change-code-btn" onclick="changeCode()" style="display:none">코드 변경</span>
-    <span class="tag lock" id="rename-team-btn" onclick="renameTeam()" style="display:none">이름 변경</span>
-    <span class="tag danger" id="delete-team-btn" onclick="deleteTeam()" style="display:none">팀 삭제</span>
+    <div class="hdr-dropdown" id="team-manage-dd" style="display:none">
+      <button class="tag lock" onclick="toggleTeamManageDD(event)">⚙ 팀 관리 ▾</button>
+      <div class="dd-menu" id="team-manage-menu">
+        <button onclick="closeTeamManageDD();changeCode()">코드 변경</button>
+        <button onclick="closeTeamManageDD();renameTeam()">이름 변경</button>
+        <button class="danger" onclick="closeTeamManageDD();deleteTeam()">팀 삭제</button>
+      </div>
+    </div>
     <div class="hdr-actions">
       <button class="btn btn-sm" onclick="openMo('roster')">+ 선수 추가</button>
       <button class="btn btn-sm btn-p" onclick="openMo('train')">+ 훈련 기록</button>
@@ -225,9 +237,17 @@ body.locked .gate-wrap{display:flex}
       <div class="card"><div class="card-title">공격 효율 추이 (월별)</div><div style="position:relative;height:200px"><canvas id="attackChart">월별 공격 효율 차트</canvas></div></div>
       <div class="card"><div class="card-title">리시브 성공률 추이 (월별)</div><div style="position:relative;height:200px"><canvas id="receiveChart">월별 리시브 성공률 차트</canvas></div></div>
     </div>
-    <div class="grid2" style="margin-bottom:16px">
-      <div class="card"><div class="card-title">최근 교류전</div><div id="ov-matches"><div class="loading"><div class="spinner"></div></div></div></div>
-      <div class="card"><div class="card-title">이달 일정</div><div id="ov-schedule"><div class="loading"><div class="spinner"></div></div></div></div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+        <div class="card-title" style="margin-bottom:0">최근 기록</div>
+        <div style="display:flex;gap:6px" id="ov-recent-tabs">
+          <button class="btn btn-sm btn-p" data-kind="training" onclick="setOvRecentKind('training')">훈련</button>
+          <button class="btn btn-sm" data-kind="match" onclick="setOvRecentKind('match')">교류전</button>
+          <button class="btn btn-sm" data-kind="tournament" onclick="setOvRecentKind('tournament')">대회</button>
+          <button class="btn btn-sm" data-kind="all" onclick="setOvRecentKind('all')">전체</button>
+        </div>
+      </div>
+      <div id="ov-recent"><div class="loading"><div class="spinner"></div></div></div>
     </div>
     <div class="card">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
@@ -529,10 +549,21 @@ function updateLockUI(){
   if(!el)return;
   el.textContent='🔓 코드 확인됨';
   el.title='클릭해서 잠그기(로그아웃)';
-  const cc=gid('change-code-btn'); if(cc) cc.style.display='inline-block';
-  const rn=gid('rename-team-btn'); if(rn) rn.style.display='inline-block';
-  const dt=gid('delete-team-btn'); if(dt) dt.style.display='inline-block';
+  const dd=gid('team-manage-dd'); if(dd) dd.style.display='inline-flex';
 }
+function toggleTeamManageDD(ev){
+  if(ev) ev.stopPropagation();
+  const menu=gid('team-manage-menu');
+  if(menu) menu.classList.toggle('open');
+}
+function closeTeamManageDD(){
+  const menu=gid('team-manage-menu');
+  if(menu) menu.classList.remove('open');
+}
+document.addEventListener('click',(e)=>{
+  const dd=gid('team-manage-dd');
+  if(dd && !dd.contains(e.target)) closeTeamManageDD();
+});
 async function renameTeam(){
   const newName = prompt('새 팀 이름을 입력하세요:', TEAM_NAME);
   if(!newName || !newName.trim()) return;
@@ -843,16 +874,47 @@ function renderOverview(){
   if(atkC)atkC.destroy();if(rcvC)rcvC.destroy();
   atkC=new Chart(gid('attackChart'),{type:'line',data:{labels:ml,datasets:[{label:'공격효율(%)',data:ae,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.08)',tension:.3,pointRadius:4,fill:true,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>parseFloat(v).toFixed(1)+'%'}}}}});
   rcvC=new Chart(gid('receiveChart'),{type:'line',data:{labels:ml,datasets:[{label:'리시브성공률(%)',data:rr,borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,0.08)',tension:.3,pointRadius:4,fill:true,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>parseFloat(v).toFixed(1)+'%'}}}}});
-  const gameData=isTrain?[]:isTour?gFilter(db.tournament):gFilter(db.match);
-  const gameLabel=isTour?'대회명':'상대팀';
-  const opps=[...new Set(gameData.map(d=>d.date+'|'+d.opp+'|'+d.result))].sort((a,b)=>b.localeCompare(a)).slice(0,5);
-  gid('ov-matches').innerHTML=opps.length
-    ?`<table><thead><tr><th>날짜</th><th>${gameLabel}</th><th>결과</th><th class="n">참가선수</th></tr></thead><tbody>${opps.map(s=>{const[d,o,r]=s.split('|');const cnt=gameData.filter(m=>m.date===d&&m.opp===o).length;const cls=r==='승'?'b-green':r==='패'?'b-red':'b-amber';return`<tr><td>${d}</td><td>${o}</td><td><span class="badge ${cls}">${r}</span></td><td class="n">${cnt}명</td></tr>`;}).join('')}</tbody></table>`
-    :`<div class="empty">${isTrain?'훈련':isTour?'대회':'교류전'} 데이터가 없습니다.</div>`;
-  const now=new Date(),ms=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-  const evts=db.events.filter(e=>fmtDate(e.date).startsWith(ms)).sort((a,b)=>fmtDate(a.date).localeCompare(fmtDate(b.date))).slice(0,6);
-  gid('ov-schedule').innerHTML=evts.length?evts.map(e=>{const c=evtCols[e.type]||evtCols.other;const ed=fmtDate(e.date);return`<div class="evt-item"><div class="evt-bar" style="background:${c.bar}"></div><div class="evt-body"><div class="evt-title">${ed.slice(8)}일 · ${e.title}</div><div class="evt-meta">${e.time||''} ${e.loc?'· '+e.loc:''}</div></div></div>`;}).join(''):'<div class="empty">이달 일정이 없습니다.</div>';
+  renderOvRecent();
   refreshOvPlayerSel();
+}
+// ── 개요: 최근 기록 (훈련/교류전/대회/전체 중 선택해서 봄) ──
+let ovRecentKind='training';
+function setOvRecentKind(kind){
+  ovRecentKind=kind;
+  document.querySelectorAll('#ov-recent-tabs .btn').forEach(b=>b.classList.toggle('btn-p', b.dataset.kind===kind));
+  renderOvRecent();
+}
+function recentRecordsRows(kind){
+  const buildGame=(data,label)=>{
+    const keys=[...new Set(data.map(d=>d.date+'|'+d.opp+'|'+d.result))].sort((a,b)=>b.localeCompare(a));
+    return keys.map(k=>{
+      const[d,o,r]=k.split('|');
+      const cnt=data.filter(x=>x.date===d&&x.opp===o&&x.result===r).length;
+      return{date:d,type:label,opp:o,result:r,count:cnt};
+    });
+  };
+  const buildTraining=(data)=>{
+    const dates=[...new Set(data.map(d=>d.date))].sort((a,b)=>b.localeCompare(a));
+    return dates.map(d=>({date:d,type:'훈련',opp:'-',result:'-',count:data.filter(x=>x.date===d).length}));
+  };
+  let rows=[];
+  if(kind==='training'||kind==='all')rows=rows.concat(buildTraining(gFilter(db.training)));
+  if(kind==='match'||kind==='all')rows=rows.concat(buildGame(gFilter(db.match),'교류전'));
+  if(kind==='tournament'||kind==='all')rows=rows.concat(buildGame(gFilter(db.tournament),'대회'));
+  rows.sort((a,b)=>b.date.localeCompare(a.date));
+  return rows.slice(0,8);
+}
+function renderOvRecent(){
+  const rows=recentRecordsRows(ovRecentKind);
+  const cont=gid('ov-recent');
+  if(!cont)return;
+  const kindLabel=ovRecentKind==='training'?'훈련':ovRecentKind==='match'?'교류전':ovRecentKind==='tournament'?'대회':'기록';
+  if(!rows.length){ cont.innerHTML=`<div class="empty">${kindLabel} 데이터가 없습니다.</div>`; return; }
+  cont.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>날짜</th>${ovRecentKind==='all'?'<th>유형</th>':''}<th>상대</th><th>결과</th><th class="n">참가인원</th></tr></thead><tbody>${rows.map(r=>{
+    const cls=r.result==='승'?'b-green':r.result==='패'?'b-red':'b-amber';
+    const resultCell=r.result==='-'?'-':`<span class="badge ${cls}">${r.result}</span>`;
+    return`<tr><td>${r.date}</td>${ovRecentKind==='all'?`<td>${r.type}</td>`:''}<td>${r.opp}</td><td>${resultCell}</td><td class="n">${r.count}명</td></tr>`;
+  }).join('')}</tbody></table></div>`;
 }
 function renderTraining(){
   const pos=gid('f-tpos').value,mon=gid('f-tmon').value,nm=gid('f-tname').value;
@@ -869,6 +931,16 @@ function renderMatchTab(){
   const tbody=gid('m-tbody');
   if(!rows.length){tbody.innerHTML='<tr><td colspan="19" class="empty">조회된 데이터가 없습니다.</td></tr>';return;}
   tbody.innerHTML=rows.map(d=>{const s=cs(d);const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';return`<tr><td>${d.date}</td><td>${d.opp}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${d.name}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delMatch('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;}).join('');
+}
+// 선수 명단에서 선수를 클릭하면 '선수 기록' 탭으로 이동해 그 선수만 바로 보여준다.
+function viewPlayerStat(name){
+  const navBtn = Array.from(document.querySelectorAll('.nb')).find(b=>{
+    const oc=b.getAttribute('onclick')||'';
+    return oc.includes("'pstat'");
+  });
+  switchTab('pstat', navBtn);
+  const sel = gid('pstat-sel');
+  if(sel){ sel.value = name; renderPStat(); }
 }
 function refreshPSel(){
   const names=[...new Set([...gFilter(db.training),...gFilter(db.match),...gFilter(db.tournament),...gFilter(db.roster)].map(d=>d.name))].sort();
@@ -897,7 +969,8 @@ function renderRoster(){
   gid('roster-list').innerHTML=sorted.length?sorted.map(r=>{
     const c=posColors[r.pos]||['#F1EFE8','#5F5E5A'];
     const gBadge=r.gender==='female'?'<span style="font-size:10px;background:#FCEBEB;color:#A32D2D;padding:1px 6px;border-radius:99px;margin-left:4px">여</span>':'<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:99px;margin-left:4px">남</span>';
-    return`<div class="player-row"><div class="player-info-block"><div class="avatar" style="background:${c[0]};color:${c[1]}">${r.name.slice(0,2)}</div><div><div class="player-name">${r.num?'#'+r.num+' ':''}${r.name} ${gBadge}</div><div class="player-meta">${r.pos} · ${r.grade||'학년미정'} ${r.height?'· '+r.height+'cm':''} ${r.reach?'· 타점 '+r.reach+'cm':''}</div>${r.memo?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${r.memo}</div>`:''}</div></div><div class="action-btns"><button class="btn btn-sm" onclick="editRoster('${r.id}')">수정</button><button class="btn btn-sm" onclick="delRoster('${r.id}')" style="color:var(--red)">삭제</button></div></div>`;
+    const safeName=String(r.name).replace(/'/g,"\\'");
+    return`<div class="player-row"><div class="player-info-block" style="cursor:pointer" onclick="viewPlayerStat('${safeName}')" title="클릭하면 이 선수의 기록만 보여요"><div class="avatar" style="background:${c[0]};color:${c[1]}">${r.name.slice(0,2)}</div><div><div class="player-name">${r.num?'#'+r.num+' ':''}${r.name} ${gBadge}</div><div class="player-meta">${r.pos} · ${r.grade||'학년미정'} ${r.height?'· '+r.height+'cm':''} ${r.reach?'· 타점 '+r.reach+'cm':''}</div>${r.memo?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${r.memo}</div>`:''}</div></div><div class="action-btns"><button class="btn btn-sm" onclick="editRoster('${r.id}')">수정</button><button class="btn btn-sm" onclick="delRoster('${r.id}')" style="color:var(--red)">삭제</button></div></div>`;
   }).join(''):'<div class="empty">선수가 없습니다.</div>';
 }
 function calMove(d){calM+=d;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}selDate=null;renderCalendar();}
