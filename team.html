@@ -505,7 +505,7 @@ body.locked .gate-wrap{display:flex}
         <label>결과</label><select id="bulk-result"><option>승</option><option>패</option><option>무</option></select>
       </div>
       <div class="fgrp" style="flex:1;min-width:220px">
-        <label>메모 (선택)</label><input id="bulk-memo" placeholder="예: 라이트가 잘했고 수비가 탄탄했다"/>
+        <label>메모 (선택)</label><input id="bulk-memo" placeholder="예: 서브 리시브 위주로 진행, 전체적으로 집중력 좋았음"/>
       </div>
       <button class="btn btn-sm" style="margin-left:auto" onclick="clearBulkTable()">입력값 전체 지우기</button>
     </div>
@@ -518,7 +518,7 @@ body.locked .gate-wrap{display:flex}
         <th class="n">디그시도</th><th class="n">디그성공</th><th class="n">개인실책</th>
       </tr></thead><tbody id="bulk-tbody"></tbody></table>
       <table class="bulk-tbl" id="bulk-tbl-simple" style="display:none"><thead><tr>
-        <th>선수</th><th>참가</th>
+        <th>선수</th><th>출석</th>
       </tr></thead><tbody id="bulk-tbody-simple"></tbody></table>
     </div>
     <div class="modal-ft"><button class="btn" onclick="closeMo('bulk')">취소</button><button class="btn btn-p" id="bulk-save-btn" onclick="saveBulk()">전체 저장</button></div>
@@ -1362,7 +1362,7 @@ function setBulkMode(mode){
   gid('bulk-tbl-detail').style.display = mode==='detail' ? 'table' : 'none';
   gid('bulk-tbl-simple').style.display = mode==='simple' ? 'table' : 'none';
   gid('bulk-help-text').textContent = mode==='simple'
-    ? '세부 스탯 없이, 참가한 선수만 체크하고 저장하세요. 통계 평균에는 포함되지 않고 "출석 기록"으로만 남아요.'
+    ? '세부 스탯 없이, 출석한 선수만 체크하고 저장하세요. 통계 평균에는 포함되지 않고 "출석 기록"으로만 남아요.'
     : '기록이 있는 선수만 값을 입력하세요. 값을 하나도 입력하지 않은 선수는 저장되지 않습니다.';
   renderBulkTable();
 }
@@ -1372,7 +1372,7 @@ function renderBulkTable(){
     const tbody=gid('bulk-tbody-simple');
     if(!tbody)return;
     if(!rows.length){tbody.innerHTML='<tr><td colspan="2" class="empty">선수가 없습니다. 먼저 선수를 추가하세요.</td></tr>';return;}
-    tbody.innerHTML=rows.map(r=>`<tr data-rid="${r.id}"><td><b>${r.num?'#'+r.num+' ':''}${esc(r.name)}</b><div style="font-size:11px;color:var(--text2);font-weight:400">${esc(r.pos)}</div></td><td><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-attend/> 참가함</label></td></tr>`).join('');
+    tbody.innerHTML=rows.map(r=>`<tr data-rid="${r.id}"><td><b>${r.num?'#'+r.num+' ':''}${esc(r.name)}</b><div style="font-size:11px;color:var(--text2);font-weight:400">${esc(r.pos)}</div></td><td><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-attend/> 출석함</label></td></tr>`).join('');
     return;
   }
   const tbody=gid('bulk-tbody');
