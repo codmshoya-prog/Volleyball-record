@@ -100,6 +100,10 @@ tbody tr:hover{background:var(--bg2)}
 .bulk-tbl td input{width:60px;padding:5px 6px;font-size:12px;text-align:center;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text)}
 .bulk-tbl td input:focus{outline:2px solid var(--blue);outline-offset:1px}
 .bulk-type-tabs{display:flex;gap:6px;margin-bottom:14px}
+.bulk-mode-tabs{display:flex;gap:22px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.bmtab{padding:9px 2px;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.bmtab:hover{color:var(--text)}
+.bmtab.active{color:var(--text);border-bottom-color:var(--blue);font-weight:700}
 .player-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
 .player-row:last-child{border-bottom:none}
 .player-info-block{display:flex;align-items:center;gap:12px}
@@ -219,6 +223,7 @@ body.locked .gate-wrap{display:flex}
     <button class="nb" onclick="switchTab('tournament',this)">대회</button>
     <button class="nb" onclick="switchTab('pstat',this)">선수 기록</button>
     <button class="nb" onclick="switchTab('roster',this)">선수 명단</button>
+    <button class="nb" onclick="switchTab('memo',this)">메모</button>
     <button class="nb" onclick="switchTab('calendar',this)">일정</button>
   </nav>
 </div>
@@ -343,6 +348,10 @@ body.locked .gate-wrap{display:flex}
     </div>
     <div class="mg" id="roster-summary"></div>
     <div class="card"><div id="roster-list"><div class="loading"><div class="spinner"></div>불러오는 중...</div></div></div>
+  </div>
+  <div id="tab-memo" class="tc">
+    <p style="font-size:12.5px;color:var(--text2);margin-bottom:14px">"일괄 입력"에서 남긴 그날 메모와, 간단 기록(출석만)으로 저장된 날을 훈련·교류전·대회 전체에서 모아 봅니다.</p>
+    <div class="card"><div id="memo-list"><div class="loading"><div class="spinner"></div>불러오는 중...</div></div></div>
   </div>
   <div id="tab-calendar" class="tc">
     <div class="cal-wrap">
@@ -483,6 +492,10 @@ body.locked .gate-wrap{display:flex}
       <button class="btn btn-sm" id="bulk-tab-match" onclick="setBulkType('match')">교류전</button>
       <button class="btn btn-sm" id="bulk-tab-tournament" onclick="setBulkType('tournament')">대회</button>
     </div>
+    <div class="bulk-mode-tabs">
+      <button class="bmtab active" id="bulk-mode-detail" onclick="setBulkMode('detail')">상세 기록</button>
+      <button class="bmtab" id="bulk-mode-simple" onclick="setBulkMode('simple')">간단 기록 (출석만)</button>
+    </div>
     <div class="bulk-hdr-row">
       <div class="fgrp"><label>날짜 *</label><input id="bulk-date" type="date"/></div>
       <div class="fgrp" id="bulk-opp-row" style="display:none">
@@ -491,16 +504,22 @@ body.locked .gate-wrap{display:flex}
       <div class="fgrp" id="bulk-result-row" style="display:none">
         <label>결과</label><select id="bulk-result"><option>승</option><option>패</option><option>무</option></select>
       </div>
+      <div class="fgrp" style="flex:1;min-width:220px">
+        <label>메모 (선택)</label><input id="bulk-memo" placeholder="예: 라이트가 잘했고 수비가 탄탄했다"/>
+      </div>
       <button class="btn btn-sm" style="margin-left:auto" onclick="clearBulkTable()">입력값 전체 지우기</button>
     </div>
-    <p style="font-size:12px;color:var(--text2);margin:-6px 0 12px">기록이 있는 선수만 값을 입력하세요. 값을 하나도 입력하지 않은 선수는 저장되지 않습니다.</p>
+    <p id="bulk-help-text" style="font-size:12px;color:var(--text2);margin:-6px 0 12px">기록이 있는 선수만 값을 입력하세요. 값을 하나도 입력하지 않은 선수는 저장되지 않습니다.</p>
     <div class="tbl-wrap">
-      <table class="bulk-tbl"><thead><tr>
+      <table class="bulk-tbl" id="bulk-tbl-detail"><thead><tr>
         <th>선수</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th>
         <th class="n">서브에이스</th><th class="n">서브범실</th>
         <th class="n">리시브범실</th><th class="n">리시브성공</th><th class="n">리시브시도</th>
         <th class="n">디그시도</th><th class="n">디그성공</th><th class="n">개인실책</th>
       </tr></thead><tbody id="bulk-tbody"></tbody></table>
+      <table class="bulk-tbl" id="bulk-tbl-simple" style="display:none"><thead><tr>
+        <th>선수</th><th>참가</th>
+      </tr></thead><tbody id="bulk-tbody-simple"></tbody></table>
     </div>
     <div class="modal-ft"><button class="btn" onclick="closeMo('bulk')">취소</button><button class="btn btn-p" id="bulk-save-btn" onclick="saveBulk()">전체 저장</button></div>
   </div>
@@ -856,6 +875,7 @@ function switchTab(name,el){
   if(name==='tournament')renderTournamentTab();
   if(name==='pstat')refreshPSel();
   if(name==='roster')renderRoster();
+  if(name==='memo')renderMemoTab();
   if(name==='calendar')renderCalendar();
 }
 function openMo(k){
@@ -1048,6 +1068,40 @@ function renderOvRecent(){
     return`<tr><td>${r.date}</td>${ovRecentKind==='all'?`<td>${r.type}</td>`:''}<td>${esc(r.opp)}</td><td>${resultCell}</td><td class="n">${r.count}명</td></tr>`;
   }).join('')}</tbody></table></div>`;
 }
+// ── 메모 탭: 훈련/교류전/대회 전체를 "그날 단위"로 묶어서, 메모와 간단 기록(출석만) 여부를 함께 보여줌 ──
+function sessionLogRows(){
+  const buildGame=(data,label)=>{
+    const keys=[...new Set(data.map(d=>d.date+'|'+d.opp+'|'+d.result))].sort((a,b)=>b.localeCompare(a));
+    return keys.map(k=>{
+      const[d,o,r]=k.split('|');
+      const rows=data.filter(x=>x.date===d&&x.opp===o&&x.result===r);
+      return{date:d,type:label,opp:o,result:r,count:rows.length,memo:rows.find(x=>x.memo)?.memo||'',simple:rows.some(x=>x.note)};
+    });
+  };
+  const buildTraining=(data)=>{
+    const dates=[...new Set(data.map(d=>d.date))].sort((a,b)=>b.localeCompare(a));
+    return dates.map(d=>{
+      const rows=data.filter(x=>x.date===d);
+      return{date:d,type:'훈련',opp:'-',result:'-',count:rows.length,memo:rows.find(x=>x.memo)?.memo||'',simple:rows.some(x=>x.note)};
+    });
+  };
+  const rows=[...buildTraining(gFilter(db.training)),...buildGame(gFilter(db.match),'교류전'),...buildGame(gFilter(db.tournament),'대회')];
+  rows.sort((a,b)=>b.date.localeCompare(a.date));
+  return rows;
+}
+function renderMemoTab(){
+  const rows=sessionLogRows();
+  const cont=gid('memo-list');
+  if(!cont)return;
+  if(!rows.length){cont.innerHTML='<div class="empty">기록이 없습니다.</div>';return;}
+  cont.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>날짜</th><th>유형</th><th>상대</th><th>결과</th><th>기록 방식</th><th class="n">참가인원</th><th>메모</th></tr></thead><tbody>${rows.map(r=>{
+    const cls=r.result==='승'?'b-green':r.result==='패'?'b-red':'b-amber';
+    const resultCell=r.result==='-'?'-':`<span class="badge ${cls}">${r.result}</span>`;
+    const modeCell=r.simple?'<span class="badge b-amber">간단</span>':'<span class="badge b-blue">상세</span>';
+    const memoCell=r.memo?esc(r.memo):'<span style="color:var(--text3)">-</span>';
+    return`<tr><td>${r.date}</td><td>${r.type}</td><td>${esc(r.opp)}</td><td>${resultCell}</td><td>${modeCell}</td><td class="n">${r.count}명</td><td style="white-space:normal;min-width:200px">${memoCell}</td></tr>`;
+  }).join('')}</tbody></table></div>`;
+}
 function renderTraining(){
   const pos=gid('f-tpos').value,mon=gid('f-tmon').value,nm=gid('f-tname').value;
   const names=[...new Set(gFilter(db.training).map(d=>d.name))].sort();
@@ -1056,13 +1110,20 @@ function renderTraining(){
   const rows=gFilter(db.training).filter(d=>(!pos||d.pos===pos)&&(!mon||d.month===parseInt(mon))&&(!nm||d.name===nm)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const tbody=gid('t-tbody');
   if(!rows.length){tbody.innerHTML='<tr><td colspan="18" class="empty">조회된 데이터가 없습니다.</td></tr>';return;}
-  tbody.innerHTML=rows.map(d=>{const s=cs(d);return`<tr><td>${d.date}</td><td><b>${esc(d.name)}</b></td><td>${esc(d.pos)}</td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delTrain('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;}).join('');
+  tbody.innerHTML=rows.map(d=>{
+    if(d.note)return`<tr><td>${d.date}</td><td><b>${esc(d.name)}</b></td><td>${esc(d.pos)}</td><td colspan="14" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td><td><button class="btn btn-sm" onclick="delTrain('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;
+    const s=cs(d);return`<tr><td>${d.date}</td><td><b>${esc(d.name)}</b></td><td>${esc(d.pos)}</td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delTrain('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;
+  }).join('');
 }
 function renderMatchTab(){
   const rows=[...gFilter(db.match)].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const tbody=gid('m-tbody');
   if(!rows.length){tbody.innerHTML='<tr><td colspan="19" class="empty">조회된 데이터가 없습니다.</td></tr>';return;}
-  tbody.innerHTML=rows.map(d=>{const s=cs(d);const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delMatch('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;}).join('');
+  tbody.innerHTML=rows.map(d=>{
+    const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';
+    if(d.note)return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td colspan="14" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td><td><button class="btn btn-sm" onclick="delMatch('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;
+    const s=cs(d);return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delMatch('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;
+  }).join('');
 }
 // 선수 명단에서 선수를 클릭하면 '선수 기록' 탭으로 이동해 그 선수만 바로 보여준다.
 function viewPlayerStat(name){
@@ -1095,12 +1156,12 @@ function pstatSectionHtml(section,title,rows,oppLabel){
   if(!oppLabel){
     // 훈련: 상대/결과 없음
     table=view==='pct'
-      ?`<table><thead><tr><th>날짜</th><th class="n">공격효율</th><th class="n">공격성공률</th><th class="n">리시브성공률</th><th class="n">디그성공률</th><th class="n">서브에이스</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{const s=cs(d);return`<tr><td>${d.date}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${s.rr}%</td><td class="n">${s.dr}%</td><td class="n">${d.srvA}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`
-      :`<table><thead><tr><th>날짜</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">서브에이스</th><th class="n">서브범실</th><th class="n">리시브범실</th><th class="n">리시브성공</th><th class="n">리시브시도</th><th class="n">디그시도</th><th class="n">디그성공</th><th class="n">총실책</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{const s=cs(d);return`<tr><td>${d.date}</td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${d.rcvOk}</td><td class="n">${d.rcvAtt}</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`;
+      ?`<table><thead><tr><th>날짜</th><th class="n">공격효율</th><th class="n">공격성공률</th><th class="n">리시브성공률</th><th class="n">디그성공률</th><th class="n">서브에이스</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{if(d.note)return`<tr><td>${d.date}</td><td colspan="6" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td></tr>`;const s=cs(d);return`<tr><td>${d.date}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${s.rr}%</td><td class="n">${s.dr}%</td><td class="n">${d.srvA}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`
+      :`<table><thead><tr><th>날짜</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">서브에이스</th><th class="n">서브범실</th><th class="n">리시브범실</th><th class="n">리시브성공</th><th class="n">리시브시도</th><th class="n">디그시도</th><th class="n">디그성공</th><th class="n">총실책</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{if(d.note)return`<tr><td>${d.date}</td><td colspan="12" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td></tr>`;const s=cs(d);return`<tr><td>${d.date}</td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${d.rcvOk}</td><td class="n">${d.rcvAtt}</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`;
   }else{
     table=view==='pct'
-      ?`<table><thead><tr><th>날짜</th><th>${oppLabel}</th><th>결과</th><th class="n">공격효율</th><th class="n">공격성공률</th><th class="n">리시브성공률</th><th class="n">서브에이스</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{const s=cs(d);const cls=d.result==='승'?'b-green':'b-red';return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${s.rr}%</td><td class="n">${d.srvA}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`
-      :`<table><thead><tr><th>날짜</th><th>${oppLabel}</th><th>결과</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">서브에이스</th><th class="n">서브범실</th><th class="n">리시브범실</th><th class="n">리시브성공</th><th class="n">리시브시도</th><th class="n">디그시도</th><th class="n">디그성공</th><th class="n">총실책</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{const s=cs(d);const cls=d.result==='승'?'b-green':'b-red';return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${d.rcvOk}</td><td class="n">${d.rcvAtt}</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`;
+      ?`<table><thead><tr><th>날짜</th><th>${oppLabel}</th><th>결과</th><th class="n">공격효율</th><th class="n">공격성공률</th><th class="n">리시브성공률</th><th class="n">서브에이스</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';if(d.note)return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td colspan="5" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td></tr>`;const s=cs(d);return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${s.rr}%</td><td class="n">${d.srvA}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`
+      :`<table><thead><tr><th>날짜</th><th>${oppLabel}</th><th>결과</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">서브에이스</th><th class="n">서브범실</th><th class="n">리시브범실</th><th class="n">리시브성공</th><th class="n">리시브시도</th><th class="n">디그시도</th><th class="n">디그성공</th><th class="n">총실책</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';if(d.note)return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td colspan="12" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td></tr>`;const s=cs(d);return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${d.rcvOk}</td><td class="n">${d.rcvAtt}</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`;
   }
   return`<div class="card">${header}<div class="tbl-wrap">${table}</div></div>`;
 }
@@ -1111,7 +1172,8 @@ function renderPStat(){
   const ro=db.roster.find(r=>r.name===name);
   const pc=posColors[ro?.pos]||['#F1EFE8','#5F5E5A'];
   const metrics2=(ro&&posMetrics[ro.pos])||defaultMetrics;
-  const metricCards=metrics2.map(m=>{const vals=all.map(d=>m.calc(d)).filter(v=>v!==null&&v!==undefined);const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;const isPercent=['ae','ar','rr','dr'].includes(m.key);return`<div class="mc"><div class="ml">${m.label}</div><div class="mv" style="color:${m.color}">${avg.toFixed(1)}${isPercent?'%':''}</div><div class="ms">평균 (${vals.length}회)</div></div>`;}).join('');
+  const statAll=all.filter(d=>!d.note); // 출석만 기록한 간단 모드 기록은 스탯 평균에서 제외
+  const metricCards=metrics2.map(m=>{const vals=statAll.map(d=>m.calc(d)).filter(v=>v!==null&&v!==undefined);const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;const isPercent=['ae','ar','rr','dr'].includes(m.key);return`<div class="mc"><div class="ml">${m.label}</div><div class="mv" style="color:${m.color}">${avg.toFixed(1)}${isPercent?'%':''}</div><div class="ms">평균 (${vals.length}회)</div></div>`;}).join('');
   const tEP=all.reduce((s,d)=>s+d.errP,0);
   cont.innerHTML=`${ro?`<div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><div class="avatar" style="width:48px;height:48px;font-size:14px;background:${pc[0]};color:${pc[1]}">${esc(ro.name.slice(0,2))}</div><div><div style="font-size:16px;font-weight:700">${ro.num?'#'+ro.num+' ':''}${esc(ro.name)}</div><div style="font-size:13px;color:var(--text2);margin-top:3px">${esc(ro.pos)}${ro.grade?' · '+esc(ro.grade):''} ${ro.height?'· '+ro.height+'cm':''}</div></div></div>`:''}<div class="mg">${metricCards}<div class="mc"><div class="ml">개인 실책(합)</div><div class="mv" style="color:#A32D2D">${tEP}</div></div></div>`
     +pstatSectionHtml('train','훈련 기록',tR,'')
@@ -1267,11 +1329,16 @@ async function saveTournament(){
   setBtn('tour-save-btn',false);
 }
 // ── 일괄 입력: 한 화면에서 여러 선수의 기록을 표로 한 번에 입력 ──
+// "간단 기록(출석만)" 모드: 기록 담당자가 따로 없는 날에도, 세부 스탯 없이
+// 참가 여부만 체크해서 저장할 수 있게 함 (note 필드로 표시, 통계 평균 계산에서는 제외됨).
 let bulkType='training';
+let bulkMode='detail';
 function openBulk(type){
   bulkType=type||'training';
   gid('bulk-date').value=new Date().toISOString().slice(0,10);
   gid('bulk-opp').value='';
+  gid('bulk-memo').value='';
+  setBulkMode('detail');
   setBulkType(bulkType);
   gid('mo-bulk').classList.add('open');
 }
@@ -1288,15 +1355,36 @@ function setBulkType(type){
   gid('bulk-modal-title').textContent=type==='training'?'훈련 기록 일괄 입력':type==='match'?'교류전 기록 일괄 입력':'대회 기록 일괄 입력';
   renderBulkTable();
 }
+function setBulkMode(mode){
+  bulkMode=mode;
+  gid('bulk-mode-detail').className = mode==='detail' ? 'bmtab active' : 'bmtab';
+  gid('bulk-mode-simple').className = mode==='simple' ? 'bmtab active' : 'bmtab';
+  gid('bulk-tbl-detail').style.display = mode==='detail' ? 'table' : 'none';
+  gid('bulk-tbl-simple').style.display = mode==='simple' ? 'table' : 'none';
+  gid('bulk-help-text').textContent = mode==='simple'
+    ? '세부 스탯 없이, 참가한 선수만 체크하고 저장하세요. 통계 평균에는 포함되지 않고 "출석 기록"으로만 남아요.'
+    : '기록이 있는 선수만 값을 입력하세요. 값을 하나도 입력하지 않은 선수는 저장되지 않습니다.';
+  renderBulkTable();
+}
 function renderBulkTable(){
   const rows=[...gFilter(db.roster)].sort((a,b)=>((a.num||999)-(b.num||999)));
+  if(bulkMode==='simple'){
+    const tbody=gid('bulk-tbody-simple');
+    if(!tbody)return;
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="2" class="empty">선수가 없습니다. 먼저 선수를 추가하세요.</td></tr>';return;}
+    tbody.innerHTML=rows.map(r=>`<tr data-rid="${r.id}"><td><b>${r.num?'#'+r.num+' ':''}${esc(r.name)}</b><div style="font-size:11px;color:var(--text2);font-weight:400">${esc(r.pos)}</div></td><td><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-attend/> 참가함</label></td></tr>`).join('');
+    return;
+  }
   const tbody=gid('bulk-tbody');
   if(!tbody)return;
   if(!rows.length){tbody.innerHTML='<tr><td colspan="11" class="empty">선수가 없습니다. 먼저 선수를 추가하세요.</td></tr>';return;}
   const fields=['att','att-s','att-e','srv-a','srv-e','rcv-e','rcv-ok','rcv-att','dig-att','dig-ok','err-p'];
   tbody.innerHTML=rows.map(r=>`<tr data-rid="${r.id}"><td><b>${r.num?'#'+r.num+' ':''}${esc(r.name)}</b><div style="font-size:11px;color:var(--text2);font-weight:400">${esc(r.pos)}</div></td>${fields.map(f=>`<td class="n"><input type="number" min="0" placeholder="0" data-f="${f}"/></td>`).join('')}</tr>`).join('');
 }
-function clearBulkTable(){document.querySelectorAll('#bulk-tbody input').forEach(i=>i.value='');}
+function clearBulkTable(){
+  document.querySelectorAll('#bulk-tbody input').forEach(i=>i.value='');
+  document.querySelectorAll('#bulk-tbody-simple input[type=checkbox]').forEach(i=>i.checked=false);
+}
 async function saveBulk(){
   const type=bulkType;
   const date=gs('bulk-date');
@@ -1307,8 +1395,10 @@ async function saveBulk(){
     if(!opp){toast(type==='tournament'?'대회명을 입력하세요.':'상대팀을 입력하세요.','error');return;}
     result=gs('bulk-result');
   }
+  const memo=gs('bulk-memo')||null; // 그날 전체에 대한 메모(선택), 참가한 모든 선수 레코드에 동일하게 저장됨
   const fnName=type==='training'?'add_training':type==='match'?'add_match':'add_tournament';
-  const rowsEl=[...document.querySelectorAll('#bulk-tbody tr[data-rid]')];
+  const simple=bulkMode==='simple';
+  const rowsEl=[...document.querySelectorAll(simple?'#bulk-tbody-simple tr[data-rid]':'#bulk-tbody tr[data-rid]')];
   if(!rowsEl.length){toast('입력할 선수가 없습니다.','error');return;}
   const btn=gid('bulk-save-btn');if(btn){btn.textContent='저장 중...';btn.disabled=true;}
   let ok=0,fail=0;
@@ -1316,10 +1406,17 @@ async function saveBulk(){
     const rid=row.dataset.rid;
     const r=db.roster.find(x=>String(x.id)===String(rid));
     if(!r)continue;
-    const val=(f)=>parseFloat(row.querySelector(`[data-f="${f}"]`)?.value)||0;
-    const att=val('att'),attS=val('att-s'),attE=val('att-e'),srvA=val('srv-a'),srvE=val('srv-e'),rcvE=val('rcv-e'),rcvOk=val('rcv-ok'),rcvAtt=val('rcv-att'),digAtt=val('dig-att'),digOk=val('dig-ok'),errP=val('err-p');
-    if(!(att||attS||attE||srvA||srvE||rcvE||rcvOk||rcvAtt||digAtt||digOk||errP))continue;
-    const data={date,name:r.name,pos:r.pos,att,attS,attE,srvA,srvE,rcvS:0,rcvE,rcvOk,rcvAtt,digAtt,digOk,errT:attE+srvE+rcvE+errP,errP};
+    let att=0,attS=0,attE=0,srvA=0,srvE=0,rcvE=0,rcvOk=0,rcvAtt=0,digAtt=0,digOk=0,errP=0,note=null;
+    if(simple){
+      const checked=row.querySelector('[data-attend]')?.checked;
+      if(!checked)continue;
+      note='출석만 기록(간단 모드)';
+    }else{
+      const val=(f)=>parseFloat(row.querySelector(`[data-f="${f}"]`)?.value)||0;
+      att=val('att');attS=val('att-s');attE=val('att-e');srvA=val('srv-a');srvE=val('srv-e');rcvE=val('rcv-e');rcvOk=val('rcv-ok');rcvAtt=val('rcv-att');digAtt=val('dig-att');digOk=val('dig-ok');errP=val('err-p');
+      if(!(att||attS||attE||srvA||srvE||rcvE||rcvOk||rcvAtt||digAtt||digOk||errP))continue;
+    }
+    const data={date,name:r.name,pos:r.pos,att,attS,attE,srvA,srvE,rcvS:0,rcvE,rcvOk,rcvAtt,digAtt,digOk,errT:attE+srvE+rcvE+errP,errP,note,memo};
     if(type==='training'){data.month=parseInt(date.slice(5,7));}
     else{data.opp=opp;data.result=result;}
     const {data:newId, error}=await callWriteRpc(fnName,{p_team_id:TEAM_ID, p_payload:data});
@@ -1350,7 +1447,11 @@ function renderTournamentTab(){
   const rows=[...gFilter(db.tournament)].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const tbody=gid('tour-tbody');
   if(!rows.length){tbody.innerHTML='<tr><td colspan="19" class="empty">대회 데이터가 없습니다.</td></tr>';return;}
-  tbody.innerHTML=rows.map(d=>{const s=cs(d);const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delTournament('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;}).join('');
+  tbody.innerHTML=rows.map(d=>{
+    const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';
+    if(d.note)return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td colspan="14" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td><td><button class="btn btn-sm" onclick="delTournament('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;
+    const s=cs(d);return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delTournament('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`;
+  }).join('');
 }
 loadAll();
 </script>
