@@ -1168,6 +1168,17 @@ async function saveEditMemo(){
   renderMemoTab();
   toast('메모가 저장됐습니다.','success');
 }
+// 원본 표에서 같은 날(또는 같은 날+상대+결과) 레코드를 세션 단위로 묶어줌.
+// (Map 기반이라 정렬이 100% 인접하지 않아도 같은 키는 항상 하나의 그룹으로 합쳐짐)
+function groupSessions(rows,keyFn){
+  const map=new Map(),order=[];
+  rows.forEach(d=>{
+    const k=keyFn(d);
+    if(!map.has(k)){map.set(k,[]);order.push(k);}
+    map.get(k).push(d);
+  });
+  return order.map(k=>map.get(k));
+}
 function renderTraining(){
   const pos=gid('f-tpos').value,mon=gid('f-tmon').value,nm=gid('f-tname').value;
   const names=[...new Set(gFilter(db.training).map(d=>d.name))].sort();
@@ -1176,14 +1187,19 @@ function renderTraining(){
   const rows=gFilter(db.training).filter(d=>(!pos||d.pos===pos)&&(!mon||d.month===parseInt(mon))&&(!nm||d.name===nm)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const tbody=gid('t-tbody');
   if(!rows.length){tbody.innerHTML='<tr><td colspan="18" class="empty">조회된 데이터가 없습니다.</td></tr>';return;}
-  let lastDate=null;const html=[];
-  rows.forEach(d=>{
-    if(d.date!==lastDate){
-      lastDate=d.date;
-      if(d.memo)html.push(`<tr><td colspan="18" style="color:var(--text2);font-size:12.5px;background:var(--bg2)">📝 메모: ${esc(d.memo)}</td></tr>`);
+  const html=[];
+  groupSessions(rows,d=>d.date).forEach(g=>{
+    const date=g[0].date,simple=g.some(d=>d.note),memo=g.find(d=>d.memo)?.memo||'';
+    // 간단 모드(출석만) 세션은 선수마다 같은 배지를 반복하지 않고, 메모 탭처럼 "참가인원 + 메모" 요약 한 줄로만 보여줌
+    if(simple){
+      html.push(`<tr><td>${date}</td><td colspan="17" style="padding:10px 12px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:var(--text2);font-size:12.5px"><button class="btn btn-sm" onclick="showAttendees('training','${escJsAttr(date)}','-','-')">👥 ${g.length}명 참가</button>${memo?`<span>📝 ${esc(memo)}</span>`:'<span style="color:var(--text3)">메모 없음</span>'}</div></td></tr>`);
+      return;
     }
-    if(d.note){html.push(`<tr><td>${d.date}</td><td><b>${esc(d.name)}</b></td><td>${esc(d.pos)}</td><td colspan="14" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td><td><button class="btn btn-sm" onclick="delTrain('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);return;}
-    const s=cs(d);html.push(`<tr><td>${d.date}</td><td><b>${esc(d.name)}</b></td><td>${esc(d.pos)}</td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delTrain('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);
+    if(memo)html.push(`<tr><td colspan="18" style="color:var(--text2);font-size:12.5px;background:var(--bg2)">📝 메모: ${esc(memo)}</td></tr>`);
+    g.forEach(d=>{
+      const s=cs(d);
+      html.push(`<tr><td>${d.date}</td><td><b>${esc(d.name)}</b></td><td>${esc(d.pos)}</td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delTrain('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);
+    });
   });
   tbody.innerHTML=html.join('');
 }
@@ -1191,16 +1207,20 @@ function renderMatchTab(){
   const rows=[...gFilter(db.match)].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const tbody=gid('m-tbody');
   if(!rows.length){tbody.innerHTML='<tr><td colspan="19" class="empty">조회된 데이터가 없습니다.</td></tr>';return;}
-  let lastKey=null;const html=[];
-  rows.forEach(d=>{
-    const key=d.date+'|'+d.opp+'|'+d.result;
-    if(key!==lastKey){
-      lastKey=key;
-      if(d.memo)html.push(`<tr><td colspan="19" style="color:var(--text2);font-size:12.5px;background:var(--bg2)">📝 메모: ${esc(d.memo)}</td></tr>`);
+  const html=[];
+  groupSessions(rows,d=>d.date+'|'+d.opp+'|'+d.result).forEach(g=>{
+    const{date,opp,result}=g[0];
+    const cls=result==='승'?'b-green':result==='패'?'b-red':'b-amber';
+    const simple=g.some(d=>d.note),memo=g.find(d=>d.memo)?.memo||'';
+    if(simple){
+      html.push(`<tr><td>${date}</td><td>${esc(opp)}</td><td><span class="badge ${cls}">${result}</span></td><td colspan="16" style="padding:10px 12px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:var(--text2);font-size:12.5px"><button class="btn btn-sm" onclick="showAttendees('match','${escJsAttr(date)}','${escJsAttr(opp)}','${escJsAttr(result)}')">👥 ${g.length}명 참가</button>${memo?`<span>📝 ${esc(memo)}</span>`:'<span style="color:var(--text3)">메모 없음</span>'}</div></td></tr>`);
+      return;
     }
-    const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';
-    if(d.note){html.push(`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td colspan="14" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td><td><button class="btn btn-sm" onclick="delMatch('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);return;}
-    const s=cs(d);html.push(`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delMatch('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);
+    if(memo)html.push(`<tr><td colspan="19" style="color:var(--text2);font-size:12.5px;background:var(--bg2)">📝 메모: ${esc(memo)}</td></tr>`);
+    g.forEach(d=>{
+      const s=cs(d);
+      html.push(`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delMatch('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);
+    });
   });
   tbody.innerHTML=html.join('');
 }
@@ -1526,16 +1546,20 @@ function renderTournamentTab(){
   const rows=[...gFilter(db.tournament)].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const tbody=gid('tour-tbody');
   if(!rows.length){tbody.innerHTML='<tr><td colspan="19" class="empty">대회 데이터가 없습니다.</td></tr>';return;}
-  let lastKey=null;const html=[];
-  rows.forEach(d=>{
-    const key=d.date+'|'+d.opp+'|'+d.result;
-    if(key!==lastKey){
-      lastKey=key;
-      if(d.memo)html.push(`<tr><td colspan="19" style="color:var(--text2);font-size:12.5px;background:var(--bg2)">📝 메모: ${esc(d.memo)}</td></tr>`);
+  const html=[];
+  groupSessions(rows,d=>d.date+'|'+d.opp+'|'+d.result).forEach(g=>{
+    const{date,opp,result}=g[0];
+    const cls=result==='승'?'b-green':result==='패'?'b-red':'b-amber';
+    const simple=g.some(d=>d.note),memo=g.find(d=>d.memo)?.memo||'';
+    if(simple){
+      html.push(`<tr><td>${date}</td><td>${esc(opp)}</td><td><span class="badge ${cls}">${result}</span></td><td colspan="16" style="padding:10px 12px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:var(--text2);font-size:12.5px"><button class="btn btn-sm" onclick="showAttendees('tournament','${escJsAttr(date)}','${escJsAttr(opp)}','${escJsAttr(result)}')">👥 ${g.length}명 참가</button>${memo?`<span>📝 ${esc(memo)}</span>`:'<span style="color:var(--text3)">메모 없음</span>'}</div></td></tr>`);
+      return;
     }
-    const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';
-    if(d.note){html.push(`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td colspan="14" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td><td><button class="btn btn-sm" onclick="delTournament('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);return;}
-    const s=cs(d);html.push(`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delTournament('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);
+    if(memo)html.push(`<tr><td colspan="19" style="color:var(--text2);font-size:12.5px;background:var(--bg2)">📝 메모: ${esc(memo)}</td></tr>`);
+    g.forEach(d=>{
+      const s=cs(d);
+      html.push(`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td><button class="btn btn-sm" onclick="delTournament('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);
+    });
   });
   tbody.innerHTML=html.join('');
 }
