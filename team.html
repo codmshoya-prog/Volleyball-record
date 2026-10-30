@@ -223,6 +223,31 @@ body.locked .gate-wrap{display:flex}
 .lv-minus{width:38px;border:none;border-left:1px solid var(--border2);background:none;font-size:18px;color:var(--text2);cursor:pointer}
 .lv-minus:active{background:var(--red-bg)}
 .lv-draft{background:var(--amber-bg);border:1px solid #EF9F27;border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--amber)}
+/* ── 실시간 기록: 배구 코트 배치 ── */
+.lv-courthead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-bottom:8px}
+.lv-courthead .btn{min-height:34px}
+.lv-court{position:relative;background:var(--blue-bg);border:3px solid var(--blue);border-radius:6px 6px 14px 14px;padding:30px 8px 8px;margin-bottom:12px}
+.lv-net{position:absolute;left:-3px;right:-3px;top:-3px;height:22px;background:repeating-linear-gradient(90deg,var(--text) 0 2px,transparent 2px 8px),linear-gradient(var(--text2),var(--text2));background-size:auto,100% 4px;background-repeat:repeat,no-repeat;background-position:0 0,0 0;border-radius:4px;color:#fff;font-size:10px;font-weight:700;letter-spacing:.3em;text-align:center;line-height:22px;opacity:.9}
+.lv-net span{background:var(--text);padding:0 8px;border-radius:3px}
+.lv-cgrid{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.lv-cgrid::before{content:'';position:absolute;left:-8px;right:-8px;top:50%;border-top:2px dashed var(--blue);opacity:.45;pointer-events:none}
+.lv-slot{position:relative;text-align:left;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:8px 9px 8px;min-height:96px;cursor:pointer;font-family:inherit;color:var(--text);-webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;gap:3px;min-width:0}
+.lv-slot:active{background:var(--blue-bg);border-color:var(--blue)}
+.lv-slot.sel{outline:3px solid var(--amber);outline-offset:1px}
+.lv-slot.empty{background:transparent;border:2px dashed var(--border2);align-items:center;justify-content:center;color:var(--text2)}
+.lv-slot .lv-sn{position:absolute;top:4px;right:7px;font-size:10px;font-weight:800;color:var(--text3)}
+.lv-slot .lv-nm{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:14px}
+.lv-slot .lv-ps{font-size:10.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv-slot .lv-sm{font-size:11px;color:var(--text2);line-height:1.5;margin-top:2px}
+.lv-slot .lv-plus{font-size:26px;line-height:1;color:var(--text3)}
+.lv-slot .lv-badge{top:-8px;right:6px}
+.lv-lib{margin-bottom:12px}
+.lv-lib .lv-libl{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.lv-lib .lv-slot{width:calc((100% - 16px)/3);min-height:84px}
+.lv-slot .lv-sm{font-size:10.5px}
+.lv-mode{background:var(--amber-bg);border:1px solid #EF9F27;color:var(--amber);border-radius:var(--radius);padding:8px 12px;font-size:12.5px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lv-placelist{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow-y:auto}
+.lv-placelist .btn{text-align:left;min-height:44px}
 </style>
 </head>
 <body class="locked">
@@ -394,7 +419,7 @@ body.locked .gate-wrap{display:flex}
           <div class="fgrp" id="live-opp-row" style="display:none"><label id="live-opp-label">상대팀 *</label><input id="live-opp" placeholder="상대팀명"/></div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="font-size:12px;font-weight:700;color:var(--text2)">출전 선수 선택 (벤치 선수는 나중에 교체로 넣을 수 있어요)</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text2)">출전 선수 선택 — 포지션에 맞는 자리에 자동으로 놓여요 (나중에 바꿀 수 있어요)</div>
           <div style="display:flex;gap:6px"><button class="btn btn-sm" onclick="liveSelectAll(true)">전체 선택</button><button class="btn btn-sm" onclick="liveSelectAll(false)">전체 해제</button></div>
         </div>
         <div class="lv-pick-wrap" id="live-pick"></div>
@@ -406,9 +431,11 @@ body.locked .gate-wrap{display:flex}
         <div class="lv-title" id="live-title"></div>
         <button class="btn btn-sm" onclick="discardLive(true)" style="color:var(--red)">기록 버리기</button>
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">선수 카드를 탭하면 기록 버튼이 나와요.</div>
-      <div class="lv-grid" id="live-grid"></div>
-      <div id="live-bench-wrap" style="display:none"><div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">벤치 (탭하면 코트로)</div><div class="lv-bench" id="live-bench"></div></div>
+      <div class="lv-courthead"><span>코트의 선수를 탭하면 기록 버튼이 나와요.</span><span style="display:flex;gap:6px"><button class="btn btn-sm" onclick="liveRotate(-1)" title="반대로 로테이션">↺</button><button class="btn btn-sm" onclick="liveRotate(1)">↻ 로테이션</button></span></div>
+      <div id="live-mode"></div>
+      <div class="lv-court"><div class="lv-net"><span>NET</span></div><div class="lv-cgrid" id="live-court"></div></div>
+      <div class="lv-lib"><div class="lv-libl">리베로 <span style="font-weight:400">(코트 밖)</span></div><div id="live-libslot"></div></div>
+      <div id="live-bench-wrap" style="display:none"><div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">벤치 (탭하면 빈 자리로, 자리가 없으면 교체할 자리 선택)</div><div class="lv-bench" id="live-bench"></div></div>
       <div class="lv-bar">
         <div class="lv-set"><button class="btn btn-sm" onclick="liveSetMove(-1)">◀</button><span id="live-setlbl">1세트</span><button class="btn btn-sm" onclick="liveSetMove(1)">다음 세트 ▶</button></div>
         <button class="btn" onclick="liveUndo()">↩ 되돌리기</button>
@@ -625,8 +652,15 @@ body.locked .gate-wrap{display:flex}
     <div id="live-sheet-body"></div>
     <div class="modal-ft" style="margin-top:8px;padding-top:12px;justify-content:space-between;align-items:center;flex-wrap:wrap">
       <label style="font-size:12.5px;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="live-autoclose" onchange="liveSetAutoClose(this.checked)"/> 누르면 자동으로 닫기</label>
-      <div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="liveBenchCurrent()">벤치로</button><button class="btn btn-p" onclick="closeMo('live')">닫기</button></div>
+      <div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="liveMoveStart()">자리 바꾸기</button><button class="btn btn-sm" onclick="liveBenchCurrent()">벤치로</button><button class="btn btn-p" onclick="closeMo('live')">닫기</button></div>
     </div>
+  </div>
+</div>
+<!-- 실시간 기록: 빈 자리에 선수 넣기 -->
+<div class="overlay" id="mo-liveplace" onclick="if(event.target===this)closeMo('liveplace')">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-hd"><span class="modal-title" id="live-place-title">선수 넣기</span><button class="x-btn" onclick="closeMo('liveplace')">×</button></div>
+    <div class="lv-placelist" id="live-place-body"></div>
   </div>
 </div>
 <!-- 실시간 기록: 종료/저장 -->
@@ -1757,13 +1791,15 @@ function renderLive(){
 function resumeLive(){
   const d=liveLoadDraft();if(!d)return;
   const ok=new Set(db.roster.map(r=>String(r.id)));
-  d.active=(d.active||[]).filter(id=>ok.has(String(id)));
+  if(!d.slots)d.slots=liveAutoPlace(d.active||[]);
+  Object.keys(d.slots).forEach(k=>{if(d.slots[k]!=null&&!ok.has(String(d.slots[k])))d.slots[k]=null;});
+  delete d.active;
   d.events=(d.events||[]).filter(e=>ok.has(String(e.pid)));
-  live=d;liveWakeOn();renderLive();
+  live=d;liveMode=null;liveWakeOn();renderLive();
 }
 function discardLive(confirmFirst){
   if(confirmFirst&&live&&live.events.length&&!confirm('지금까지 기록한 내용이 모두 사라져요. 버릴까요?'))return;
-  live=null;liveSave();liveWakeOff();renderLive();
+  live=null;liveMode=null;liveSave();liveWakeOff();renderLive();
 }
 function startLive(){
   const date=gs('live-date');
@@ -1774,7 +1810,7 @@ function startLive(){
   if(!active.length){toast('출전 선수를 한 명 이상 선택하세요.','error');return;}
   const old=liveLoadDraft();
   if(old&&old.events&&old.events.length&&!confirm('기록하던 내용이 남아 있어요. 새로 시작하면 이전 내용은 사라져요. 계속할까요?'))return;
-  live={type:liveSetupType,date,opp,set:1,active,events:[],autoClose:true};
+  live={type:liveSetupType,date,opp,set:1,slots:liveAutoPlace(active),events:[],autoClose:true};liveMode=null;
   liveSave();liveWakeOn();renderLive();
 }
 function liveTotals(pid,setNo){
@@ -1787,21 +1823,101 @@ function liveTotals(pid,setNo){
   });
   return t;
 }
-function liveCardHtml(r){
+const LIVE_POS_PREF={1:'세터',2:'아포짓 스파이커',3:'미들블로커',4:'아웃사이드 히터',5:'아웃사이드 히터',6:'미들블로커',L:'리베로'};
+let liveMode=null; // {kind:'move',slot} 자리 바꾸기 / {kind:'bench',pid} 벤치 선수를 넣을 자리 고르기
+// 선택한 선수를 포지션에 맞는 자리에 자동 배치 (세터 1번, 아포짓 2번, 미들 3·6번, 아웃사이드 4·5번, 리베로는 코트 밖 L)
+function liveAutoPlace(ids){
+  const slots={'1':null,'2':null,'3':null,'4':null,'5':null,'6':null,'L':null};
+  const left=ids.map(livePlayer).filter(Boolean);
+  ['1','2','3','4','5','6','L'].forEach(s=>{
+    const i=left.findIndex(r=>r.pos===LIVE_POS_PREF[s]);
+    if(i>=0){slots[s]=String(left[i].id);left.splice(i,1);}
+  });
+  ['1','2','3','4','5','6'].forEach(s=>{
+    if(slots[s]==null&&left.length){slots[s]=String(left.shift().id);}
+  });
+  return slots;
+}
+function liveSlotOf(pid){return Object.keys(live.slots).find(s=>live.slots[s]!=null&&String(live.slots[s])===String(pid));}
+function liveSlotHtml(s){
+  const pid=live.slots[s];const r=pid!=null?livePlayer(pid):null;
+  const sel=liveMode&&liveMode.kind==='move'&&String(liveMode.slot)===String(s)?' sel':'';
+  if(!r)return`<button class="lv-slot empty${sel}" onclick="liveSlotTap('${s}')"><span class="lv-sn">${s}</span><span class="lv-plus">+</span></button>`;
   const t=liveTotals(r.id);
   const n=live.events.filter(e=>String(e.pid)===String(r.id)&&e.set===live.set).length;
-  return`<button class="lv-card" onclick="openLiveSheet('${r.id}')"><div class="lv-top"><b>${r.num?'#'+r.num+' ':''}${esc(r.name)}</b><span class="lv-pos">${esc(r.pos)}</span></div><div class="lv-sum">공격 ${t.attS}/${t.att} · 서브에이스 ${t.srvA}<br>리시브 ${t.rcvOk}/${t.rcvAtt} · 디그 ${t.digOk}/${t.digAtt}<br>블로킹 ${t.blkOk} · 총실책 ${t.attE+t.srvE+t.rcvE+t.errP}</div>${n?`<span class="lv-badge">이번 세트 ${n}</span>`:''}</button>`;
+  return`<button class="lv-slot${sel}" onclick="liveSlotTap('${s}')"><span class="lv-sn">${s}</span><span class="lv-nm">${r.num?'#'+r.num+' ':''}${esc(r.name)}</span><span class="lv-ps">${esc(r.pos)}</span><span class="lv-sm">득점 ${t.attS}/${t.att} 서브 ${t.srvA}<br>리시 ${t.rcvOk}/${t.rcvAtt} 디그 ${t.digOk}/${t.digAtt}<br>블록 ${t.blkOk} 실책 ${t.attE+t.srvE+t.rcvE+t.errP}</span>${n?`<span class="lv-badge">이번 세트 ${n}</span>`:''}</button>`;
 }
 function renderLiveMain(){
   if(!live)return;
   gid('live-title').textContent=`${liveTypeLabel(live.type)} · ${live.date}${live.opp?' · '+live.opp:''}`;
   gid('live-setlbl').textContent=live.set+'세트';
-  const act=live.active.map(livePlayer).filter(Boolean);
-  gid('live-grid').innerHTML=act.length?act.map(liveCardHtml).join(''):'<div class="empty" style="grid-column:1/-1">코트에 선수가 없어요. 아래 벤치에서 선수를 넣어주세요.</div>';
-  const actSet=new Set(live.active.map(String));
-  const bench=[...gFilter(db.roster)].filter(r=>!actSet.has(String(r.id))).sort((a,b)=>((a.num||999)-(b.num||999)));
+  // 코트: 네트 쪽이 앞줄(4·3·2), 뒷줄(5·6·1) — 코트를 우리 쪽 뒤에서 바라본 모양
+  gid('live-court').innerHTML=['4','3','2','5','6','1'].map(liveSlotHtml).join('');
+  gid('live-libslot').innerHTML=liveSlotHtml('L');
+  const m=gid('live-mode');
+  if(liveMode){
+    const txt=liveMode.kind==='move'?'자리 바꾸기: 서로 바꿀 자리를 탭하세요.':`${esc((livePlayer(liveMode.pid)||{}).name||'')} 선수를 넣을 자리를 탭하세요. (그 자리의 선수는 벤치로 가요)`;
+    m.innerHTML=`<div class="lv-mode"><span>${txt}</span><button class="btn btn-sm" onclick="liveCancelMode()">취소</button></div>`;
+  }else m.innerHTML='';
+  const onCourt=new Set(Object.values(live.slots).filter(v=>v!=null).map(String));
+  const bench=[...gFilter(db.roster)].filter(r=>!onCourt.has(String(r.id))).sort((a,b)=>((a.num||999)-(b.num||999)));
   gid('live-bench-wrap').style.display=bench.length?'block':'none';
   gid('live-bench').innerHTML=bench.map(r=>`<button class="btn btn-sm" onclick="liveBring('${r.id}')">+ ${r.num?'#'+r.num+' ':''}${esc(r.name)}</button>`).join('');
+}
+function liveCancelMode(){liveMode=null;renderLiveMain();}
+function liveSlotTap(s){
+  if(!live)return;
+  if(liveMode){
+    if(liveMode.kind==='move'){
+      const a=String(liveMode.slot),b=String(s);
+      if(a!==b){const tmp=live.slots[a];live.slots[a]=live.slots[b];live.slots[b]=tmp;liveSave();}
+    }else{
+      live.slots[s]=String(liveMode.pid);liveSave();
+    }
+    liveMode=null;renderLiveMain();return;
+  }
+  const pid=live.slots[s];
+  if(pid!=null)openLiveSheet(pid);else liveOpenPlace(s);
+}
+function liveOpenPlace(s){
+  const onCourt=new Set(Object.values(live.slots).filter(v=>v!=null).map(String));
+  const bench=[...gFilter(db.roster)].filter(r=>!onCourt.has(String(r.id))).sort((a,b)=>((a.num||999)-(b.num||999)));
+  gid('live-place-title').textContent=(s==='L'?'리베로 자리':s+'번 자리')+'에 넣을 선수';
+  gid('live-place-body').innerHTML=bench.length?bench.map(r=>`<button class="btn" onclick="liveSlotSet('${s}','${r.id}')">${r.num?'#'+r.num+' ':''}${esc(r.name)} · ${esc(r.pos)}</button>`).join(''):'<div class="empty" style="padding:16px">넣을 수 있는 선수가 없어요.</div>';
+  gid('mo-liveplace').classList.add('open');
+}
+function liveSlotSet(s,pid){live.slots[s]=String(pid);liveSave();closeMo('liveplace');renderLiveMain();}
+function liveBring(pid){
+  if(!live)return;
+  const r=livePlayer(pid);
+  let target=null;
+  if(r&&r.pos==='리베로'&&live.slots.L==null)target='L';
+  else target=['1','2','3','4','5','6'].find(s=>live.slots[s]==null)||null;
+  if(target){live.slots[target]=String(pid);liveSave();renderLiveMain();return;}
+  liveMode={kind:'bench',pid:String(pid)};renderLiveMain();
+}
+function liveMoveStart(){
+  if(!live||liveSheetPid==null)return;
+  const s=liveSlotOf(liveSheetPid);if(!s)return;
+  liveMode={kind:'move',slot:s};closeMo('live');renderLiveMain();
+}
+function liveBenchCurrent(){
+  if(!live||liveSheetPid==null)return;
+  const s=liveSlotOf(liveSheetPid);
+  if(s)live.slots[s]=null;
+  liveSave();closeMo('live');renderLiveMain();
+}
+// 로테이션: 서브권을 받으면 시계 방향으로 한 칸씩 이동 (2→1→6→5→4→3→2). 리베로(L)는 그대로.
+function liveRotate(dir){
+  if(!live)return;
+  const o=live.slots,n={...o};
+  const cw={'2':'1','1':'6','6':'5','5':'4','4':'3','3':'2'};
+  Object.keys(cw).forEach(from=>{
+    if(dir>0)n[cw[from]]=o[from];
+    else n[from]=o[cw[from]];
+  });
+  live.slots=n;liveSave();renderLiveMain();
+  gid('live-last').textContent=dir>0?'로테이션 ↻':'로테이션 되돌림 ↺';
 }
 function liveSetMove(d){
   if(!live)return;
@@ -1809,12 +1925,6 @@ function liveSetMove(d){
   if(n<1)return;
   live.set=n;liveSave();renderLiveMain();
   gid('live-last').textContent=n+'세트로 이동했어요';
-}
-function liveBring(pid){if(!live)return;if(!live.active.map(String).includes(String(pid)))live.active.push(String(pid));liveSave();renderLiveMain();}
-function liveBenchCurrent(){
-  if(!live||liveSheetPid==null)return;
-  live.active=live.active.filter(id=>String(id)!==String(liveSheetPid));
-  liveSave();closeMo('live');renderLiveMain();
 }
 function liveSetAutoClose(v){if(live){live.autoClose=!!v;liveSave();}}
 function openLiveSheet(pid){liveSheetPid=pid;renderLiveSheet();gid('mo-live').classList.add('open');}
