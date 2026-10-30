@@ -187,6 +187,42 @@ body.locked .gate-wrap{display:flex}
   .mg{grid-template-columns:repeat(2,1fr)}
   .cal-day{min-height:56px}
 }
+/* ── 실시간 기록 탭 ── */
+.lv-type{display:flex;gap:6px;margin-bottom:14px}
+.lv-pick-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.lv-pick{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);cursor:pointer;font-size:13px}
+.lv-pick input{width:18px;height:18px;flex-shrink:0}
+.lv-pick small{display:block;font-size:11px;color:var(--text2)}
+.lv-pick:has(input:checked){background:var(--blue-bg);border-color:var(--blue)}
+.lv-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.lv-title{font-size:15px;font-weight:700}
+.lv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.lv-card{position:relative;text-align:left;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:12px 14px;min-height:92px;cursor:pointer;font-family:inherit;color:var(--text);-webkit-tap-highlight-color:transparent}
+.lv-card:active{background:var(--blue-bg);border-color:var(--blue)}
+.lv-top{display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin-bottom:6px}
+.lv-top b{font-size:15px}
+.lv-pos{font-size:11px;color:var(--text2)}
+.lv-sum{font-size:11.5px;color:var(--text2);line-height:1.6}
+.lv-badge{position:absolute;top:-7px;right:8px;background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px}
+.lv-bench{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.lv-bar{position:sticky;bottom:0;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:10px 12px;box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+.lv-bar .btn{min-height:40px}
+.lv-set{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px}
+.lv-last{font-size:12px;color:var(--text2);flex:1;min-width:120px}
+#mo-live{align-items:flex-end;padding:0}
+#mo-live .modal{width:min(620px,100%);border-radius:16px 16px 0 0;max-height:88vh;padding:18px 18px 14px}
+.lv-grp{margin-bottom:12px}
+.lv-gl{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:6px}
+.lv-btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.lv-cell{display:flex;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;background:var(--bg2)}
+.lv-btn{flex:1;min-height:52px;border:none;background:none;font-size:14px;font-weight:600;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 12px;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.lv-btn:active{background:var(--blue-bg)}
+.lv-cell.g .lv-btn{color:var(--green)}
+.lv-cell.r .lv-btn{color:var(--red)}
+.lv-cnt{font-size:15px;font-weight:800;color:var(--text)}
+.lv-minus{width:38px;border:none;border-left:1px solid var(--border2);background:none;font-size:18px;color:var(--text2);cursor:pointer}
+.lv-minus:active{background:var(--red-bg)}
+.lv-draft{background:var(--amber-bg);border:1px solid #EF9F27;border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--amber)}
 </style>
 </head>
 <body class="locked">
@@ -224,6 +260,7 @@ body.locked .gate-wrap{display:flex}
     <button class="nb" onclick="switchTab('training',this)">월별 훈련</button>
     <button class="nb" onclick="switchTab('match',this)">교류전</button>
     <button class="nb" onclick="switchTab('tournament',this)">대회</button>
+    <button class="nb" onclick="switchTab('live',this)">실시간 기록</button>
     <button class="nb" onclick="switchTab('pstat',this)">선수 기록</button>
     <button class="nb" onclick="switchTab('roster',this)">선수 명단</button>
     <button class="nb" onclick="switchTab('memo',this)">메모</button>
@@ -339,6 +376,45 @@ body.locked .gate-wrap{display:flex}
         <th class="n">블로킹</th>
         <th class="n">총실책</th><th class="n">개인실책</th><th class="act-td">관리</th>
       </tr></thead><tbody id="tour-tbody"></tbody></table>
+    </div>
+  </div>
+  <div id="tab-live" class="tc">
+    <div id="live-setup">
+      <div id="live-draft"></div>
+      <div class="card">
+        <div class="card-title">실시간 기록 시작</div>
+        <p style="font-size:12.5px;color:var(--text2);margin-bottom:14px;line-height:1.6">경기나 훈련을 보면서 선수를 탭하고 버튼만 누르면 횟수가 자동으로 쌓여요. 끝내면 선수별 합계가 기존 기록(훈련·교류전·대회)으로 저장돼요.</p>
+        <div class="lv-type">
+          <button class="btn btn-sm btn-p" id="live-type-training" onclick="setLiveType('training')">훈련</button>
+          <button class="btn btn-sm" id="live-type-match" onclick="setLiveType('match')">교류전</button>
+          <button class="btn btn-sm" id="live-type-tournament" onclick="setLiveType('tournament')">대회</button>
+        </div>
+        <div class="fg" style="margin-bottom:16px">
+          <div class="fgrp"><label>날짜 *</label><input id="live-date" type="date"/></div>
+          <div class="fgrp" id="live-opp-row" style="display:none"><label id="live-opp-label">상대팀 *</label><input id="live-opp" placeholder="상대팀명"/></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:12px;font-weight:700;color:var(--text2)">출전 선수 선택 (벤치 선수는 나중에 교체로 넣을 수 있어요)</div>
+          <div style="display:flex;gap:6px"><button class="btn btn-sm" onclick="liveSelectAll(true)">전체 선택</button><button class="btn btn-sm" onclick="liveSelectAll(false)">전체 해제</button></div>
+        </div>
+        <div class="lv-pick-wrap" id="live-pick"></div>
+        <div class="modal-ft" style="border-top:none;padding-top:0"><button class="btn btn-p" onclick="startLive()">기록 시작</button></div>
+      </div>
+    </div>
+    <div id="live-main" style="display:none">
+      <div class="lv-head">
+        <div class="lv-title" id="live-title"></div>
+        <button class="btn btn-sm" onclick="discardLive(true)" style="color:var(--red)">기록 버리기</button>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">선수 카드를 탭하면 기록 버튼이 나와요.</div>
+      <div class="lv-grid" id="live-grid"></div>
+      <div id="live-bench-wrap" style="display:none"><div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">벤치 (탭하면 코트로)</div><div class="lv-bench" id="live-bench"></div></div>
+      <div class="lv-bar">
+        <div class="lv-set"><button class="btn btn-sm" onclick="liveSetMove(-1)">◀</button><span id="live-setlbl">1세트</span><button class="btn btn-sm" onclick="liveSetMove(1)">다음 세트 ▶</button></div>
+        <button class="btn" onclick="liveUndo()">↩ 되돌리기</button>
+        <span class="lv-last" id="live-last"></span>
+        <button class="btn btn-p" onclick="openLiveFinish()">기록 종료·저장</button>
+      </div>
     </div>
   </div>
   <div id="tab-pstat" class="tc">
@@ -540,6 +616,30 @@ body.locked .gate-wrap{display:flex}
       </tr></thead><tbody id="bulk-tbody-simple"></tbody></table>
     </div>
     <div class="modal-ft"><button class="btn" onclick="closeMo('bulk')">취소</button><button class="btn btn-p" id="bulk-save-btn" onclick="saveBulk()">전체 저장</button></div>
+  </div>
+</div>
+<!-- 실시간 기록: 선수별 버튼 시트 -->
+<div class="overlay" id="mo-live" onclick="if(event.target===this)closeMo('live')">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-title" id="live-sheet-title"></span><button class="x-btn" onclick="closeMo('live')">×</button></div>
+    <div id="live-sheet-body"></div>
+    <div class="modal-ft" style="margin-top:8px;padding-top:12px;justify-content:space-between;align-items:center;flex-wrap:wrap">
+      <label style="font-size:12.5px;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="live-autoclose" onchange="liveSetAutoClose(this.checked)"/> 누르면 자동으로 닫기</label>
+      <div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="liveBenchCurrent()">벤치로</button><button class="btn btn-p" onclick="closeMo('live')">닫기</button></div>
+    </div>
+  </div>
+</div>
+<!-- 실시간 기록: 종료/저장 -->
+<div class="overlay" id="mo-livefin">
+  <div class="modal modal-wide">
+    <div class="modal-hd"><span class="modal-title">기록 종료 · 저장</span><button class="x-btn" onclick="closeMo('livefin')">×</button></div>
+    <div class="bulk-hdr-row">
+      <div class="fgrp" id="livefin-result-row" style="display:none"><label>결과</label><select id="livefin-result"><option>승</option><option>패</option><option>무</option></select></div>
+      <div class="fgrp" style="flex:1;min-width:220px"><label>메모 (선택)</label><input id="livefin-memo" placeholder="예: 서브 리시브 위주로 진행"/></div>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6" id="livefin-info"></p>
+    <div class="tbl-wrap" id="livefin-table"></div>
+    <div class="modal-ft"><button class="btn" onclick="closeMo('livefin')">돌아가기</button><button class="btn btn-p" id="livefin-save-btn" onclick="saveLive()">저장</button></div>
   </div>
 </div>
 <!-- 일정 모달 -->
@@ -915,6 +1015,7 @@ function switchTab(name,el){
   if(name==='roster')renderRoster();
   if(name==='memo')renderMemoTab();
   if(name==='calendar')renderCalendar();
+  if(name==='live')renderLive();
 }
 function openMo(k){
   if(k==='train'){eids.train=null;clr(['t-att','t-att-s','t-att-e','t-srv-a','t-srv-e','t-rcv-e','t-rcv-ok','t-rcv-att','t-dig-att','t-dig-ok','t-blk-ok','t-err-t','t-err-p']);gid('t-date').value=new Date().toISOString().slice(0,10);fillRSel('t-player');}
@@ -1444,7 +1545,7 @@ function setGender(g){
   currentGender=g;
   ['all','male','female'].forEach(x=>{const btn=gid('gender-'+x);if(btn)btn.classList.toggle('active',x===g);});
   const activeTab=document.querySelector('.tc.active');
-  if(activeTab){const tabName=activeTab.id.replace('tab-','');if(tabName==='overview')renderOverview();if(tabName==='training')renderTraining();if(tabName==='match')renderMatchTab();if(tabName==='tournament')renderTournamentTab();if(tabName==='pstat')refreshPSel();if(tabName==='roster')renderRoster();}
+  if(activeTab){const tabName=activeTab.id.replace('tab-','');if(tabName==='overview')renderOverview();if(tabName==='training')renderTraining();if(tabName==='match')renderMatchTab();if(tabName==='tournament')renderTournamentTab();if(tabName==='pstat')refreshPSel();if(tabName==='roster')renderRoster();if(tabName==='live'&&!live)renderLive();}
   refreshOvPlayerSel();
 }
 function gFilter(arr){
@@ -1606,6 +1707,203 @@ function renderTournamentTab(){
     });
   });
   tbody.innerHTML=html.join('');
+}
+// ============== 실시간 기록: 선수를 탭하고 버튼을 눌러 횟수를 쌓고, 끝나면 기존 기록으로 저장 ==============
+const LIVE_FIELDS=['att','attS','attE','srvA','srvE','rcvE','rcvOk','rcvAtt','digAtt','digOk','blkOk','errP'];
+const LIVE_ACTS=[
+  {k:'atkS',g:'공격',label:'공격 득점',cls:'g',eff:{att:1,attS:1}},
+  {k:'atkN',g:'공격',label:'공격 (득점X)',eff:{att:1}},
+  {k:'atkE',g:'공격',label:'공격 범실',cls:'r',eff:{att:1,attE:1}},
+  {k:'srvA',g:'서브',label:'서브 에이스',cls:'g',eff:{srvA:1}},
+  {k:'srvE',g:'서브',label:'서브 범실',cls:'r',eff:{srvE:1}},
+  {k:'rcvO',g:'리시브',label:'리시브 성공',cls:'g',eff:{rcvAtt:1,rcvOk:1}},
+  {k:'rcvN',g:'리시브',label:'리시브 미흡',eff:{rcvAtt:1}},
+  {k:'rcvE',g:'리시브',label:'리시브 범실',cls:'r',eff:{rcvAtt:1,rcvE:1}},
+  {k:'digO',g:'디그',label:'디그 성공',cls:'g',eff:{digAtt:1,digOk:1}},
+  {k:'digN',g:'디그',label:'디그 실패',eff:{digAtt:1}},
+  {k:'blk',g:'블로킹',label:'블로킹 성공',cls:'g',eff:{blkOk:1}},
+  {k:'errP',g:'실책',label:'개인 실책',cls:'r',eff:{errP:1}}
+];
+let live=null,liveSetupType='training',liveSheetPid=null,liveWake=null;
+function liveKey(){return 'live_draft_'+TEAM_ID;}
+function liveSave(){try{if(live)localStorage.setItem(liveKey(),JSON.stringify(live));else localStorage.removeItem(liveKey());}catch(e){}}
+function liveLoadDraft(){try{const r=localStorage.getItem(liveKey());return r?JSON.parse(r):null;}catch(e){return null;}}
+async function liveWakeOn(){try{if(navigator.wakeLock&&!liveWake){liveWake=await navigator.wakeLock.request('screen');liveWake.addEventListener('release',()=>{liveWake=null;});}}catch(e){}}
+function liveWakeOff(){try{if(liveWake){liveWake.release();liveWake=null;}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(live&&document.visibilityState==='visible')liveWakeOn();});
+window.addEventListener('beforeunload',(e)=>{if(live&&live.events.length){e.preventDefault();e.returnValue='';}});
+function liveTypeLabel(t){return t==='training'?'훈련':t==='match'?'교류전':'대회';}
+function setLiveType(t){
+  liveSetupType=t;
+  ['training','match','tournament'].forEach(x=>{const b=gid('live-type-'+x);if(b)b.className=x===t?'btn btn-sm btn-p':'btn btn-sm';});
+  gid('live-opp-row').style.display=t==='training'?'none':'flex';
+  gid('live-opp-label').textContent=t==='tournament'?'대회명 *':'상대팀 *';
+}
+function liveSelectAll(on){document.querySelectorAll('#live-pick input').forEach(i=>i.checked=on);}
+function livePlayer(id){return db.roster.find(r=>String(r.id)===String(id));}
+function renderLive(){
+  const setup=gid('live-setup'),main=gid('live-main');
+  if(!setup||!main)return;
+  if(live){setup.style.display='none';main.style.display='block';renderLiveMain();return;}
+  setup.style.display='block';main.style.display='none';
+  if(!gid('live-date').value)gid('live-date').value=new Date().toISOString().slice(0,10);
+  setLiveType(liveSetupType);
+  const rows=[...gFilter(db.roster)].sort((a,b)=>((a.num||999)-(b.num||999)));
+  gid('live-pick').innerHTML=rows.length?rows.map(r=>`<label class="lv-pick"><input type="checkbox" value="${r.id}"/><span>${r.num?'#'+r.num+' ':''}${esc(r.name)}<small>${esc(r.pos)}</small></span></label>`).join(''):'<div class="empty" style="grid-column:1/-1">선수가 없습니다. 먼저 선수를 추가하세요.</div>';
+  const d=liveLoadDraft();
+  const n=d&&d.events?d.events.length:0;
+  gid('live-draft').innerHTML=n?`<div class="lv-draft"><span>기록하던 내용이 남아 있어요 — ${liveTypeLabel(d.type)} · ${esc(d.date)}${d.opp?' · '+esc(d.opp):''} · ${n}회 기록</span><span style="display:flex;gap:6px"><button class="btn btn-sm btn-p" onclick="resumeLive()">이어서 기록</button><button class="btn btn-sm" onclick="discardLive(false)">버리기</button></span></div>`:'';
+}
+function resumeLive(){
+  const d=liveLoadDraft();if(!d)return;
+  const ok=new Set(db.roster.map(r=>String(r.id)));
+  d.active=(d.active||[]).filter(id=>ok.has(String(id)));
+  d.events=(d.events||[]).filter(e=>ok.has(String(e.pid)));
+  live=d;liveWakeOn();renderLive();
+}
+function discardLive(confirmFirst){
+  if(confirmFirst&&live&&live.events.length&&!confirm('지금까지 기록한 내용이 모두 사라져요. 버릴까요?'))return;
+  live=null;liveSave();liveWakeOff();renderLive();
+}
+function startLive(){
+  const date=gs('live-date');
+  if(!date){toast('날짜를 입력하세요.','error');return;}
+  let opp='';
+  if(liveSetupType!=='training'){opp=gs('live-opp');if(!opp){toast(liveSetupType==='tournament'?'대회명을 입력하세요.':'상대팀을 입력하세요.','error');return;}}
+  const active=[...document.querySelectorAll('#live-pick input:checked')].map(i=>i.value);
+  if(!active.length){toast('출전 선수를 한 명 이상 선택하세요.','error');return;}
+  const old=liveLoadDraft();
+  if(old&&old.events&&old.events.length&&!confirm('기록하던 내용이 남아 있어요. 새로 시작하면 이전 내용은 사라져요. 계속할까요?'))return;
+  live={type:liveSetupType,date,opp,set:1,active,events:[],autoClose:true};
+  liveSave();liveWakeOn();renderLive();
+}
+function liveTotals(pid,setNo){
+  const t={};LIVE_FIELDS.forEach(f=>t[f]=0);
+  live.events.forEach(e=>{
+    if(String(e.pid)!==String(pid))return;
+    if(setNo!=null&&e.set!==setNo)return;
+    const a=LIVE_ACTS.find(x=>x.k===e.act);
+    if(a)for(const f in a.eff)t[f]+=a.eff[f];
+  });
+  return t;
+}
+function liveCardHtml(r){
+  const t=liveTotals(r.id);
+  const n=live.events.filter(e=>String(e.pid)===String(r.id)&&e.set===live.set).length;
+  return`<button class="lv-card" onclick="openLiveSheet('${r.id}')"><div class="lv-top"><b>${r.num?'#'+r.num+' ':''}${esc(r.name)}</b><span class="lv-pos">${esc(r.pos)}</span></div><div class="lv-sum">공격 ${t.attS}/${t.att} · 서브에이스 ${t.srvA}<br>리시브 ${t.rcvOk}/${t.rcvAtt} · 디그 ${t.digOk}/${t.digAtt}<br>블로킹 ${t.blkOk} · 총실책 ${t.attE+t.srvE+t.rcvE+t.errP}</div>${n?`<span class="lv-badge">이번 세트 ${n}</span>`:''}</button>`;
+}
+function renderLiveMain(){
+  if(!live)return;
+  gid('live-title').textContent=`${liveTypeLabel(live.type)} · ${live.date}${live.opp?' · '+live.opp:''}`;
+  gid('live-setlbl').textContent=live.set+'세트';
+  const act=live.active.map(livePlayer).filter(Boolean);
+  gid('live-grid').innerHTML=act.length?act.map(liveCardHtml).join(''):'<div class="empty" style="grid-column:1/-1">코트에 선수가 없어요. 아래 벤치에서 선수를 넣어주세요.</div>';
+  const actSet=new Set(live.active.map(String));
+  const bench=[...gFilter(db.roster)].filter(r=>!actSet.has(String(r.id))).sort((a,b)=>((a.num||999)-(b.num||999)));
+  gid('live-bench-wrap').style.display=bench.length?'block':'none';
+  gid('live-bench').innerHTML=bench.map(r=>`<button class="btn btn-sm" onclick="liveBring('${r.id}')">+ ${r.num?'#'+r.num+' ':''}${esc(r.name)}</button>`).join('');
+}
+function liveSetMove(d){
+  if(!live)return;
+  const n=live.set+d;
+  if(n<1)return;
+  live.set=n;liveSave();renderLiveMain();
+  gid('live-last').textContent=n+'세트로 이동했어요';
+}
+function liveBring(pid){if(!live)return;if(!live.active.map(String).includes(String(pid)))live.active.push(String(pid));liveSave();renderLiveMain();}
+function liveBenchCurrent(){
+  if(!live||liveSheetPid==null)return;
+  live.active=live.active.filter(id=>String(id)!==String(liveSheetPid));
+  liveSave();closeMo('live');renderLiveMain();
+}
+function liveSetAutoClose(v){if(live){live.autoClose=!!v;liveSave();}}
+function openLiveSheet(pid){liveSheetPid=pid;renderLiveSheet();gid('mo-live').classList.add('open');}
+function renderLiveSheet(){
+  const r=livePlayer(liveSheetPid);if(!r||!live)return;
+  gid('live-sheet-title').textContent=`${r.num?'#'+r.num+' ':''}${r.name} · ${live.set}세트`;
+  gid('live-autoclose').checked=live.autoClose!==false;
+  const groups=[...new Set(LIVE_ACTS.map(a=>a.g))];
+  gid('live-sheet-body').innerHTML=groups.map(g=>`<div class="lv-grp"><div class="lv-gl">${g}</div><div class="lv-btns">${LIVE_ACTS.filter(a=>a.g===g).map(a=>{
+    const c=live.events.filter(e=>String(e.pid)===String(r.id)&&e.act===a.k&&e.set===live.set).length;
+    return`<div class="lv-cell ${a.cls||''}"><button class="lv-btn" onclick="liveAdd('${r.id}','${a.k}')"><span>${a.label}</span><span class="lv-cnt">${c}</span></button><button class="lv-minus" onclick="liveSub('${r.id}','${a.k}')" aria-label="${a.label} 하나 빼기">−</button></div>`;
+  }).join('')}</div></div>`).join('');
+}
+function liveAdd(pid,act){
+  if(!live)return;
+  live.events.push({pid:String(pid),act,set:live.set});
+  liveSave();
+  try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}
+  const r=livePlayer(pid),a=LIVE_ACTS.find(x=>x.k===act);
+  gid('live-last').textContent=`${r?r.name:''} ${a?a.label:''} +1`;
+  renderLiveMain();
+  if(live.autoClose!==false)closeMo('live');else renderLiveSheet();
+}
+function liveSub(pid,act){
+  if(!live)return;
+  for(let i=live.events.length-1;i>=0;i--){
+    const e=live.events[i];
+    if(String(e.pid)===String(pid)&&e.act===act&&e.set===live.set){
+      live.events.splice(i,1);liveSave();
+      const r=livePlayer(pid),a=LIVE_ACTS.find(x=>x.k===act);
+      gid('live-last').textContent=`${r?r.name:''} ${a?a.label:''} −1`;
+      renderLiveMain();renderLiveSheet();return;
+    }
+  }
+  toast('이번 세트에 뺄 기록이 없어요.','error');
+}
+function liveUndo(){
+  if(!live||!live.events.length){toast('되돌릴 기록이 없어요.','error');return;}
+  const e=live.events.pop();liveSave();
+  const r=livePlayer(e.pid),a=LIVE_ACTS.find(x=>x.k===e.act);
+  gid('live-last').textContent=`되돌림: ${r?r.name:''} ${a?a.label:''} (${e.set}세트)`;
+  renderLiveMain();
+}
+function livePlayersWithEvents(){
+  const ids=[...new Set(live.events.map(e=>String(e.pid)))];
+  return ids.map(livePlayer).filter(Boolean).sort((a,b)=>((a.num||999)-(b.num||999)));
+}
+function openLiveFinish(){
+  if(!live)return;
+  const rows=livePlayersWithEvents();
+  if(!rows.length){toast('아직 기록된 내용이 없어요.','error');return;}
+  gid('livefin-result-row').style.display=live.type==='training'?'none':'flex';
+  gid('livefin-memo').value='';
+  const sets=Math.max(1,...live.events.map(e=>e.set));
+  gid('livefin-info').textContent=`${liveTypeLabel(live.type)} · ${live.date}${live.opp?' · '+live.opp:''} · ${sets}세트 기록. 선수별 합계가 ${liveTypeLabel(live.type)} 기록 1건씩으로 저장돼요 (세트별 내용은 합산되어 저장).`;
+  gid('livefin-table').innerHTML=`<table><thead><tr><th>선수</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">서브에이스</th><th class="n">서브범실</th><th class="n">리시브성공</th><th class="n">리시브시도</th><th class="n">리시브범실</th><th class="n">디그성공</th><th class="n">디그시도</th><th class="n">블로킹</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(r=>{const t=liveTotals(r.id);return`<tr><td><b>${esc(r.name)}</b></td><td class="n">${t.att}</td><td class="n">${t.attS}</td><td class="n">${t.attE}</td><td class="n">${t.srvA}</td><td class="n">${t.srvE}</td><td class="n">${t.rcvOk}</td><td class="n">${t.rcvAtt}</td><td class="n">${t.rcvE}</td><td class="n">${t.digOk}</td><td class="n">${t.digAtt}</td><td class="n">${t.blkOk}</td><td class="n">${t.errP}</td></tr>`;}).join('')}</tbody></table>`;
+  gid('mo-livefin').classList.add('open');
+}
+async function saveLive(){
+  if(!live)return;
+  const rows=livePlayersWithEvents();
+  if(!rows.length){toast('저장할 기록이 없어요.','error');return;}
+  const type=live.type;
+  const fnName=type==='training'?'add_training':type==='match'?'add_match':'add_tournament';
+  const memo=gs('livefin-memo')||null;
+  const result=gid('livefin-result').value;
+  const btn=gid('livefin-save-btn');btn.textContent='저장 중...';btn.disabled=true;
+  let ok=0;const failed=new Set();
+  for(const r of rows){
+    const t=liveTotals(r.id);
+    const data={date:live.date,name:r.name,pos:r.pos,att:t.att,attS:t.attS,attE:t.attE,srvA:t.srvA,srvE:t.srvE,rcvS:0,rcvE:t.rcvE,rcvOk:t.rcvOk,rcvAtt:t.rcvAtt,digAtt:t.digAtt,digOk:t.digOk,blkOk:t.blkOk,errT:t.attE+t.srvE+t.rcvE+t.errP,errP:t.errP,note:null,memo};
+    if(type==='training'){data.month=parseInt(live.date.slice(5,7));}
+    else{data.opp=live.opp;data.result=result;}
+    const {data:newId,error}=await callWriteRpc(fnName,{p_team_id:TEAM_ID,p_payload:data});
+    if(!error){data.id=newId;db[type].push(data);ok++;}
+    else failed.add(String(r.id));
+  }
+  btn.textContent='저장';btn.disabled=false;
+  closeMo('livefin');
+  if(failed.size){
+    // 저장에 실패한 선수의 기록만 남겨서 다시 시도할 수 있게 함
+    live.events=live.events.filter(e=>failed.has(String(e.pid)));
+    liveSave();renderLiveMain();
+    toast(`${ok}명 저장됨, ${failed.size}명 실패 — 실패한 선수만 남겨뒀어요. 다시 저장해주세요.`,'error');
+    return;
+  }
+  live=null;liveSave();liveWakeOff();
+  toast(`${ok}명의 ${liveTypeLabel(type)} 기록이 저장됐어요.`,'success');
+  renderLive();
 }
 loadAll();
 </script>
