@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>배구부 데이터 분석</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -248,6 +248,50 @@ body.locked .gate-wrap{display:flex}
 .lv-mode{background:var(--amber-bg);border:1px solid #EF9F27;color:var(--amber);border-radius:var(--radius);padding:8px 12px;font-size:12.5px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .lv-placelist{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow-y:auto}
 .lv-placelist .btn{text-align:left;min-height:44px}
+/* ── 실시간 기록: 폰/패드 터치 최적화 ── */
+.lv-slot,.lv-btn,.lv-minus,.lv-pick,.lv-cell,.lv-bar .btn,.lv-bench .btn,.lv-courthead .btn{touch-action:manipulation;-webkit-user-select:none;user-select:none}
+@media(pointer:coarse){.fgrp input,.fgrp select,.fgrp textarea{font-size:16px}.lv-bench .btn{min-height:44px;padding:8px 14px}.lv-courthead .btn{min-height:40px}}
+body.live-focus .header-top .hdr-actions,body.live-focus #gender-row,body.live-focus .nav{display:none !important}
+body.live-focus .header{position:static}
+body.live-focus .header-top{padding:8px 0}
+body.live-focus .content{padding-top:12px}
+body.live-focus{overscroll-behavior-y:contain}
+.lv-layout{display:block}
+.lv-side{display:none}
+.lv-bar{display:block;padding:8px 10px calc(10px + env(safe-area-inset-bottom))}
+.lv-bar-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lv-bar .lv-last{display:block;font-size:13px;font-weight:600;color:var(--text);min-height:20px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv-bar .btn{min-height:46px}
+.lv-bar-row{flex-wrap:nowrap}
+.lv-bar .btn{white-space:nowrap;font-size:13px;padding:8px 10px}
+.lv-set{gap:4px;white-space:nowrap;flex-shrink:0}
+.lv-set .btn{min-width:42px;padding:8px}
+.lv-set span{font-weight:700;font-size:14px;min-width:40px;text-align:center}
+#mo-live .modal{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+@keyframes lvflash{0%{background:#bfe3c9;transform:scale(.96)}100%{background:var(--bg);transform:scale(1)}}
+.lv-slot.flash{animation:lvflash .6s ease-out}
+.lv-slot.cur{outline:3px solid var(--blue);outline-offset:1px}
+@media(min-width:768px){
+  .lv-slot{min-height:120px;padding:10px 12px}
+  .lv-slot .lv-nm{font-size:17px}
+  .lv-slot .lv-ps{font-size:12px}
+  .lv-slot .lv-sm{font-size:12.5px}
+  .lv-btn{min-height:60px;font-size:15px}
+  .lv-minus{width:48px}
+  .lv-court{padding:34px 12px 12px}
+  .lv-cgrid{gap:12px}
+}
+@media(min-width:900px){
+  .lv-layout{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
+  .lv-side{display:block;position:sticky;top:12px;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:14px}
+  .lv-side-title{font-size:15px;font-weight:700;margin-bottom:10px}
+  .lv-side-ft{display:flex;gap:8px;margin-top:6px}
+  .lv-side-hint{color:var(--text3);text-align:center;padding:40px 10px;font-size:13px;line-height:1.7}
+  .lv-btns{grid-template-columns:repeat(2,1fr)}
+  .lv-side{max-height:calc(100vh - 150px);overflow-y:auto}
+  .lv-side .lv-btn{min-height:50px}
+  .lv-side .lv-grp{margin-bottom:8px}
+}
 </style>
 </head>
 <body class="locked">
@@ -419,7 +463,7 @@ body.locked .gate-wrap{display:flex}
           <div class="fgrp" id="live-opp-row" style="display:none"><label id="live-opp-label">상대팀 *</label><input id="live-opp" placeholder="상대팀명"/></div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="font-size:12px;font-weight:700;color:var(--text2)">출전 선수 선택 — 포지션에 맞는 자리에 자동으로 놓여요 (나중에 바꿀 수 있어요)</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text2)">출전 선수 선택 — 포지션에 맞는 자리에 자동으로 놓여요 (지난번 선택이 기억돼요)</div>
           <div style="display:flex;gap:6px"><button class="btn btn-sm" onclick="liveSelectAll(true)">전체 선택</button><button class="btn btn-sm" onclick="liveSelectAll(false)">전체 해제</button></div>
         </div>
         <div class="lv-pick-wrap" id="live-pick"></div>
@@ -429,18 +473,24 @@ body.locked .gate-wrap{display:flex}
     <div id="live-main" style="display:none">
       <div class="lv-head">
         <div class="lv-title" id="live-title"></div>
-        <button class="btn btn-sm" onclick="discardLive(true)" style="color:var(--red)">기록 버리기</button>
+        <span style="display:flex;gap:6px"><button class="btn btn-sm" onclick="liveFocus(!document.body.classList.contains('live-focus'))">메뉴 켜기/끄기</button><button class="btn btn-sm" onclick="discardLive(true)" style="color:var(--red)">기록 버리기</button></span>
       </div>
+      <div class="lv-layout"><div class="lv-left">
       <div class="lv-courthead"><span>코트의 선수를 탭하면 기록 버튼이 나와요.</span><span style="display:flex;gap:6px"><button class="btn btn-sm" onclick="liveRotate(-1)" title="반대로 로테이션">↺</button><button class="btn btn-sm" onclick="liveRotate(1)">↻ 로테이션</button></span></div>
       <div id="live-mode"></div>
       <div class="lv-court"><div class="lv-net"><span>NET</span></div><div class="lv-cgrid" id="live-court"></div></div>
       <div class="lv-lib"><div class="lv-libl">리베로 <span style="font-weight:400">(코트 밖)</span></div><div id="live-libslot"></div></div>
       <div id="live-bench-wrap" style="display:none"><div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">벤치 (탭하면 빈 자리로, 자리가 없으면 교체할 자리 선택)</div><div class="lv-bench" id="live-bench"></div></div>
+      </div>
+      <div class="lv-side" id="live-side"><div class="lv-side-title" id="live-side-title"></div><div id="live-side-body"></div><div class="lv-side-ft" id="live-side-ft" style="display:none"><button class="btn" onclick="liveMoveStart()">자리 바꾸기</button><button class="btn" onclick="liveBenchCurrent()">벤치로</button></div></div>
+      </div>
       <div class="lv-bar">
-        <div class="lv-set"><button class="btn btn-sm" onclick="liveSetMove(-1)">◀</button><span id="live-setlbl">1세트</span><button class="btn btn-sm" onclick="liveSetMove(1)">다음 세트 ▶</button></div>
-        <button class="btn" onclick="liveUndo()">↩ 되돌리기</button>
-        <span class="lv-last" id="live-last"></span>
-        <button class="btn btn-p" onclick="openLiveFinish()">기록 종료·저장</button>
+        <div class="lv-last" id="live-last">선수를 탭해서 기록하세요</div>
+        <div class="lv-bar-row">
+          <div class="lv-set"><button class="btn" onclick="liveSetMove(-1)" aria-label="이전 세트">◀</button><span id="live-setlbl">1세트</span><button class="btn" onclick="liveSetMove(1)" aria-label="다음 세트">▶</button></div>
+          <button class="btn" onclick="liveUndo()">↩ 되돌리기</button>
+          <button class="btn btn-p" onclick="openLiveFinish()">종료·저장</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1049,6 +1099,7 @@ function switchTab(name,el){
   if(name==='roster')renderRoster();
   if(name==='memo')renderMemoTab();
   if(name==='calendar')renderCalendar();
+  liveFocus(name==='live'&&!!live);
   if(name==='live')renderLive();
 }
 function openMo(k){
@@ -1784,6 +1835,7 @@ function renderLive(){
   setLiveType(liveSetupType);
   const rows=[...gFilter(db.roster)].sort((a,b)=>((a.num||999)-(b.num||999)));
   gid('live-pick').innerHTML=rows.length?rows.map(r=>`<label class="lv-pick"><input type="checkbox" value="${r.id}"/><span>${r.num?'#'+r.num+' ':''}${esc(r.name)}<small>${esc(r.pos)}</small></span></label>`).join(''):'<div class="empty" style="grid-column:1/-1">선수가 없습니다. 먼저 선수를 추가하세요.</div>';
+  try{const lp=JSON.parse(localStorage.getItem('live_pick_'+TEAM_ID)||'[]');document.querySelectorAll('#live-pick input').forEach(i=>{if(lp.map(String).includes(i.value))i.checked=true;});}catch(e){}
   const d=liveLoadDraft();
   const n=d&&d.events?d.events.length:0;
   gid('live-draft').innerHTML=n?`<div class="lv-draft"><span>기록하던 내용이 남아 있어요 — ${liveTypeLabel(d.type)} · ${esc(d.date)}${d.opp?' · '+esc(d.opp):''} · ${n}회 기록</span><span style="display:flex;gap:6px"><button class="btn btn-sm btn-p" onclick="resumeLive()">이어서 기록</button><button class="btn btn-sm" onclick="discardLive(false)">버리기</button></span></div>`:'';
@@ -1795,11 +1847,11 @@ function resumeLive(){
   Object.keys(d.slots).forEach(k=>{if(d.slots[k]!=null&&!ok.has(String(d.slots[k])))d.slots[k]=null;});
   delete d.active;
   d.events=(d.events||[]).filter(e=>ok.has(String(e.pid)));
-  live=d;liveMode=null;liveWakeOn();renderLive();
+  live=d;liveMode=null;liveWakeOn();liveFocus(true);renderLive();
 }
 function discardLive(confirmFirst){
   if(confirmFirst&&live&&live.events.length&&!confirm('지금까지 기록한 내용이 모두 사라져요. 버릴까요?'))return;
-  live=null;liveMode=null;liveSave();liveWakeOff();renderLive();
+  live=null;liveMode=null;liveSave();liveWakeOff();liveFocus(false);renderLive();
 }
 function startLive(){
   const date=gs('live-date');
@@ -1811,7 +1863,8 @@ function startLive(){
   const old=liveLoadDraft();
   if(old&&old.events&&old.events.length&&!confirm('기록하던 내용이 남아 있어요. 새로 시작하면 이전 내용은 사라져요. 계속할까요?'))return;
   live={type:liveSetupType,date,opp,set:1,slots:liveAutoPlace(active),events:[],autoClose:true};liveMode=null;
-  liveSave();liveWakeOn();renderLive();
+  try{localStorage.setItem('live_pick_'+TEAM_ID,JSON.stringify(active));}catch(e){}
+  liveSave();liveWakeOn();liveFocus(true);renderLive();
 }
 function liveTotals(pid,setNo){
   const t={};LIVE_FIELDS.forEach(f=>t[f]=0);
@@ -1841,7 +1894,7 @@ function liveAutoPlace(ids){
 function liveSlotOf(pid){return Object.keys(live.slots).find(s=>live.slots[s]!=null&&String(live.slots[s])===String(pid));}
 function liveSlotHtml(s){
   const pid=live.slots[s];const r=pid!=null?livePlayer(pid):null;
-  const sel=liveMode&&liveMode.kind==='move'&&String(liveMode.slot)===String(s)?' sel':'';
+  const sel=(liveMode&&liveMode.kind==='move'&&String(liveMode.slot)===String(s)?' sel':'')+(liveFlash!=null&&String(liveFlash)===String(s)?' flash':'')+(liveWide()&&pid!=null&&liveSheetPid!=null&&String(pid)===String(liveSheetPid)?' cur':'');
   if(!r)return`<button class="lv-slot empty${sel}" onclick="liveSlotTap('${s}')"><span class="lv-sn">${s}</span><span class="lv-plus">+</span></button>`;
   const t=liveTotals(r.id);
   const n=live.events.filter(e=>String(e.pid)===String(r.id)&&e.set===live.set).length;
@@ -1863,6 +1916,7 @@ function renderLiveMain(){
   const bench=[...gFilter(db.roster)].filter(r=>!onCourt.has(String(r.id))).sort((a,b)=>((a.num||999)-(b.num||999)));
   gid('live-bench-wrap').style.display=bench.length?'block':'none';
   gid('live-bench').innerHTML=bench.map(r=>`<button class="btn btn-sm" onclick="liveBring('${r.id}')">+ ${r.num?'#'+r.num+' ':''}${esc(r.name)}</button>`).join('');
+  if(liveWide())renderLiveSide();
 }
 function liveCancelMode(){liveMode=null;renderLiveMain();}
 function liveSlotTap(s){
@@ -1905,6 +1959,7 @@ function liveBenchCurrent(){
   if(!live||liveSheetPid==null)return;
   const s=liveSlotOf(liveSheetPid);
   if(s)live.slots[s]=null;
+  liveSheetPid=null;
   liveSave();closeMo('live');renderLiveMain();
 }
 // 로테이션: 서브권을 받으면 시계 방향으로 한 칸씩 이동 (2→1→6→5→4→3→2). 리베로(L)는 그대로.
@@ -1928,15 +1983,37 @@ function liveSetMove(d){
 }
 function liveSetAutoClose(v){if(live){live.autoClose=!!v;liveSave();}}
 function openLiveSheet(pid){liveSheetPid=pid;renderLiveSheet();gid('mo-live').classList.add('open');}
+// ── 폰/패드 대응: 넓은 화면(패드 가로)에서는 모달 없이 오른쪽 패널에 버튼을 항상 보여줌 ──
+function liveWide(){try{return window.matchMedia('(min-width:900px)').matches;}catch(e){return false;}}
+let liveFlash=null;
+function liveFocus(on){document.body.classList.toggle('live-focus',!!on);}
+function liveActionsHtml(r){
+  const groups=[...new Set(LIVE_ACTS.map(a=>a.g))];
+  return groups.map(g=>`<div class="lv-grp"><div class="lv-gl">${g}</div><div class="lv-btns">${LIVE_ACTS.filter(a=>a.g===g).map(a=>{
+    const c=live.events.filter(e=>String(e.pid)===String(r.id)&&e.act===a.k&&e.set===live.set).length;
+    return`<div class="lv-cell ${a.cls||''}"><button class="lv-btn" onclick="liveAdd('${r.id}','${a.k}')"><span>${a.label}</span><span class="lv-cnt">${c}</span></button><button class="lv-minus" onclick="liveSub('${r.id}','${a.k}')" aria-label="${a.label} 하나 빼기">−</button></div>`;
+  }).join('')}</div></div>`).join('');
+}
 function renderLiveSheet(){
   const r=livePlayer(liveSheetPid);if(!r||!live)return;
   gid('live-sheet-title').textContent=`${r.num?'#'+r.num+' ':''}${r.name} · ${live.set}세트`;
   gid('live-autoclose').checked=live.autoClose!==false;
-  const groups=[...new Set(LIVE_ACTS.map(a=>a.g))];
-  gid('live-sheet-body').innerHTML=groups.map(g=>`<div class="lv-grp"><div class="lv-gl">${g}</div><div class="lv-btns">${LIVE_ACTS.filter(a=>a.g===g).map(a=>{
-    const c=live.events.filter(e=>String(e.pid)===String(r.id)&&e.act===a.k&&e.set===live.set).length;
-    return`<div class="lv-cell ${a.cls||''}"><button class="lv-btn" onclick="liveAdd('${r.id}','${a.k}')"><span>${a.label}</span><span class="lv-cnt">${c}</span></button><button class="lv-minus" onclick="liveSub('${r.id}','${a.k}')" aria-label="${a.label} 하나 빼기">−</button></div>`;
-  }).join('')}</div></div>`).join('');
+  gid('live-sheet-body').innerHTML=liveActionsHtml(r);
+}
+function renderLiveSide(){
+  const t=gid('live-side-title'),b=gid('live-side-body'),f=gid('live-side-ft');
+  if(!t)return;
+  const r=live&&liveSheetPid!=null?livePlayer(liveSheetPid):null;
+  const onCourt=r&&liveSlotOf(r.id);
+  if(!r||!onCourt){t.textContent='';b.innerHTML='<div class="lv-side-hint">코트의 선수를 탭하면<br>여기에 기록 버튼이 나와요.</div>';f.style.display='none';return;}
+  t.textContent=`${r.num?'#'+r.num+' ':''}${r.name} · ${r.pos} · ${live.set}세트`;
+  b.innerHTML=liveActionsHtml(r);f.style.display='flex';
+}
+function liveRefreshActions(){if(liveWide())renderLiveSide();else renderLiveSheet();}
+function openLiveSheet(pid){
+  liveSheetPid=pid;
+  if(liveWide()){renderLiveMain();return;}
+  renderLiveSheet();gid('mo-live').classList.add('open');
 }
 function liveAdd(pid,act){
   if(!live)return;
@@ -1945,7 +2022,10 @@ function liveAdd(pid,act){
   try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}
   const r=livePlayer(pid),a=LIVE_ACTS.find(x=>x.k===act);
   gid('live-last').textContent=`${r?r.name:''} ${a?a.label:''} +1`;
+  liveFlash=liveSlotOf(pid);
   renderLiveMain();
+  setTimeout(()=>{liveFlash=null;},700);
+  if(liveWide())return;
   if(live.autoClose!==false)closeMo('live');else renderLiveSheet();
 }
 function liveSub(pid,act){
@@ -1956,7 +2036,7 @@ function liveSub(pid,act){
       live.events.splice(i,1);liveSave();
       const r=livePlayer(pid),a=LIVE_ACTS.find(x=>x.k===act);
       gid('live-last').textContent=`${r?r.name:''} ${a?a.label:''} −1`;
-      renderLiveMain();renderLiveSheet();return;
+      renderLiveMain();liveRefreshActions();return;
     }
   }
   toast('이번 세트에 뺄 기록이 없어요.','error');
@@ -2011,7 +2091,7 @@ async function saveLive(){
     toast(`${ok}명 저장됨, ${failed.size}명 실패 — 실패한 선수만 남겨뒀어요. 다시 저장해주세요.`,'error');
     return;
   }
-  live=null;liveSave();liveWakeOff();
+  live=null;liveSave();liveWakeOff();liveFocus(false);
   toast(`${ok}명의 ${liveTypeLabel(type)} 기록이 저장됐어요.`,'success');
   renderLive();
 }
