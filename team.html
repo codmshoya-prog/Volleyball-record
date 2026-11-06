@@ -213,6 +213,7 @@ body.locked .gate-wrap{display:flex}
 #mo-live .modal{width:min(620px,100%);border-radius:16px 16px 0 0;max-height:88vh;padding:18px 18px 14px}
 .lv-grp{margin-bottom:12px}
 .lv-gl{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.06em;margin-bottom:6px}
+.lv-gs{font-weight:500;font-size:11px;color:var(--text2);margin-left:6px;letter-spacing:0}
 .lv-btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
 .lv-cell{display:flex;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;background:var(--bg2)}
 .lv-btn{flex:1;min-height:52px;border:none;background:none;font-size:14px;font-weight:600;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 12px;font-family:inherit;-webkit-tap-highlight-color:transparent}
@@ -292,6 +293,58 @@ body.live-focus{overscroll-behavior-y:contain}
   .lv-side .lv-btn{min-height:50px}
   .lv-side .lv-grp{margin-bottom:8px}
 }
+/* ── 공지(확성기) ── */
+.ann-btn{position:relative;width:40px;height:40px;border-radius:50%;border:1px solid var(--border2);background:var(--bg);color:var(--text);display:none;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0;transition:background .15s,transform .1s}
+.ann-btn.on{display:inline-flex}
+.ann-btn:hover{background:var(--bg2)}
+.ann-btn:active{transform:scale(.94)}
+.ann-btn svg{width:20px;height:20px}
+.ann-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.ann-dot{position:absolute;top:-2px;right:-2px;min-width:12px;height:12px;border-radius:99px;background:#E5484D;border:2px solid var(--bg);display:none}
+.ann-btn.unread .ann-dot{display:block}
+.top-btns{display:flex;gap:8px;align-items:flex-start}
+.ann-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;padding:16px}
+.ann-ov.open{display:flex}
+.ann-box{background:#fff;color:#212529;border-radius:14px;width:min(520px,100%);max-height:86vh;display:flex;flex-direction:column;box-shadow:0 10px 44px rgba(0,0,0,.22);font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif}
+.ann-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(0,0,0,.1);flex-shrink:0}
+.ann-hd b{font-size:16px;display:flex;align-items:center;gap:8px}
+.ann-hd b svg{width:18px;height:18px}
+.ann-x{background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:#6c757d;padding:2px 6px}
+.ann-list{overflow-y:auto;padding:6px 18px 14px;-webkit-overflow-scrolling:touch}
+.ann-item{padding:14px 0;border-bottom:1px solid rgba(0,0,0,.08)}
+.ann-item:last-child{border-bottom:none}
+.ann-meta{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:11px;color:#868e96}
+.ann-chip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px}
+.ann-chip.new{background:#E6F1FB;color:#185FA5}
+.ann-chip.improve{background:#EAF3DE;color:#3B6D11}
+.ann-chip.fix{background:#FAEEDA;color:#854F0B}
+.ann-chip.notice{background:#f1f3f5;color:#495057}
+.ann-pin{font-size:11px;font-weight:700;color:#A32D2D}
+.ann-title{font-size:15px;font-weight:700;margin-bottom:5px;line-height:1.4}
+.ann-body{font-size:13px;line-height:1.65;color:#495057;white-space:pre-wrap;word-break:break-word}
+.ann-body a{color:#185FA5}
+.ann-empty{padding:40px 0;text-align:center;color:#adb5bd;font-size:13px}
+.ann-act{display:flex;gap:6px;margin-top:8px}
+.ann-act button,.ann-adm button.ann-sm{font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid rgba(0,0,0,.18);background:#fff;color:#212529;cursor:pointer}
+.ann-act button.del{color:#A32D2D}
+.ann-adm{border-top:1px solid rgba(0,0,0,.1);padding:14px 18px 16px;background:#f8f9fa;border-radius:0 0 14px 14px;flex-shrink:0;overflow-y:auto;max-height:48vh}
+.ann-adm h4{font-size:13px;margin-bottom:10px}
+.ann-adm input[type=text],.ann-adm input[type=password],.ann-adm textarea,.ann-adm select{width:100%;font-size:14px;padding:9px 10px;border:1px solid rgba(0,0,0,.18);border-radius:8px;background:#fff;color:#212529;margin-bottom:8px;font-family:inherit}
+.ann-adm textarea{min-height:84px;resize:vertical}
+.ann-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.ann-row select{margin:0;flex:1}
+.ann-row label{font-size:13px;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.ann-go{width:100%;padding:11px;font-size:14px;font-weight:700;border:none;border-radius:8px;background:#212529;color:#fff;cursor:pointer}
+.ann-go:disabled{opacity:.5}
+.ann-adm .ann-sm.cancel{margin-top:8px}
+@media(max-width:640px){.ann-ov{align-items:flex-end;padding:0}.ann-box{width:100%;border-radius:16px 16px 0 0;max-height:90vh}.ann-adm{border-radius:0}}
+body.live-focus .ann-btn{display:none !important}
+
+.header-top .ann-btn{background:rgba(255,255,255,.2);border-color:transparent;color:#fff;width:34px;height:34px}
+.header-top .ann-btn:hover{background:rgba(255,255,255,.32)}
+.header-top .ann-btn svg{width:18px;height:18px}
+.header-top .ann-dot{border-color:var(--blue)}
+.top-btns{display:none}
 </style>
 </head>
 <body class="locked">
@@ -310,6 +363,7 @@ body.live-focus{overscroll-behavior-y:contain}
         <button class="danger" onclick="closeTeamManageDD();deleteTeam()">팀 삭제</button>
       </div>
     </div>
+    <button type="button" class="ann-btn" id="ann-btn" onclick="annOpen()" aria-label="공지사항 열기" title="공지사항"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l8 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M18 8.5a4.5 4.5 0 0 1 0 7"/><path d="M7 14l1.2 5a1 1 0 0 0 1 .8H10a1 1 0 0 0 1-1.2L10 15"/></svg><span class="ann-dot" id="ann-dot"></span></button>
     <div class="hdr-actions">
       <button class="btn btn-sm" onclick="openMo('roster')">+ 선수 추가</button>
       <button class="btn btn-sm btn-p" onclick="openMo('train')">+ 훈련 기록</button>
@@ -414,9 +468,9 @@ body.live-focus{overscroll-behavior-y:contain}
         <th>날짜</th><th>선수</th><th>포지션</th>
         <th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">공격효율</th><th class="n">공격성공률</th>
         <th class="n">서브에이스</th><th class="n">서브범실</th>
-        <th class="n">리시브범실</th><th class="n">리시브성공률</th>
+        <th class="n">리시브성공</th><th class="n">리시브미흡</th><th class="n">리시브범실</th><th class="n">리시브성공률</th>
         <th class="n">디그시도</th><th class="n">디그성공</th><th class="n">디그성공률</th>
-        <th class="n">블로킹</th>
+        <th class="n">블로킹시도</th><th class="n">블로킹성공</th><th class="n">블로킹실패</th>
         <th class="n">총실책</th><th class="n">개인실책</th><th class="act-td">관리</th>
       </tr></thead><tbody id="t-tbody"></tbody></table>
     </div>
@@ -427,9 +481,9 @@ body.live-focus{overscroll-behavior-y:contain}
         <th>날짜</th><th>상대팀</th><th>결과</th><th>선수</th>
         <th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">공격효율</th><th class="n">공격성공률</th>
         <th class="n">서브에이스</th><th class="n">서브범실</th>
-        <th class="n">리시브범실</th><th class="n">리시브성공률</th>
+        <th class="n">리시브성공</th><th class="n">리시브미흡</th><th class="n">리시브범실</th><th class="n">리시브성공률</th>
         <th class="n">디그시도</th><th class="n">디그성공</th><th class="n">디그성공률</th>
-        <th class="n">블로킹</th>
+        <th class="n">블로킹시도</th><th class="n">블로킹성공</th><th class="n">블로킹실패</th>
         <th class="n">총실책</th><th class="n">개인실책</th><th class="act-td">관리</th>
       </tr></thead><tbody id="m-tbody"></tbody></table>
     </div>
@@ -440,9 +494,9 @@ body.live-focus{overscroll-behavior-y:contain}
         <th>날짜</th><th>대회명</th><th>결과</th><th>선수</th>
         <th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">공격효율</th><th class="n">공격성공률</th>
         <th class="n">서브에이스</th><th class="n">서브범실</th>
-        <th class="n">리시브범실</th><th class="n">리시브성공률</th>
+        <th class="n">리시브성공</th><th class="n">리시브미흡</th><th class="n">리시브범실</th><th class="n">리시브성공률</th>
         <th class="n">디그시도</th><th class="n">디그성공</th><th class="n">디그성공률</th>
-        <th class="n">블로킹</th>
+        <th class="n">블로킹시도</th><th class="n">블로킹성공</th><th class="n">블로킹실패</th>
         <th class="n">총실책</th><th class="n">개인실책</th><th class="act-td">관리</th>
       </tr></thead><tbody id="tour-tbody"></tbody></table>
     </div>
@@ -540,6 +594,14 @@ body.live-focus{overscroll-behavior-y:contain}
   </div>
 </div>
 <div class="toast-wrap" id="toast-wrap"></div>
+<div class="ann-ov" id="ann-ov" onclick="if(event.target===this)annClose()">
+  <div class="ann-box" role="dialog" aria-modal="true" aria-labelledby="ann-ttl">
+    <div class="ann-hd"><b id="ann-ttl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l8 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M18 8.5a4.5 4.5 0 0 1 0 7"/></svg>공지사항</b><button type="button" class="ann-x" onclick="annClose()" aria-label="닫기">×</button></div>
+    <div class="ann-list" id="ann-list"></div>
+    <div class="ann-adm" id="ann-adm" style="display:none"></div>
+  </div>
+</div>
+
 <!-- 훈련 모달 -->
 <div class="overlay" id="mo-train">
   <div class="modal">
@@ -556,14 +618,16 @@ body.live-focus{overscroll-behavior-y:contain}
       <div class="fgrp"><label>서브 에이스</label><input id="t-srv-a" type="number" min="0" placeholder="0"/></div>
       <div class="fgrp"><label>서브 범실</label><input id="t-srv-e" type="number" min="0" placeholder="0" oninput="calcErrT('t')"/></div>
       <div class="fsec">리시브 지표</div>
+      <div class="fgrp"><label>리시브 성공</label><input id="t-rcv-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>리시브 미흡</label><input id="t-rcv-miss" type="number" min="0" placeholder="0"/></div>
       <div class="fgrp"><label>리시브 범실</label><input id="t-rcv-e" type="number" min="0" placeholder="0" oninput="calcErrT('t')"/></div>
-      <div class="fgrp"><label>리시브 성공 횟수</label><input id="t-rcv-ok" type="number" min="0" placeholder="0"/></div>
-      <div class="fgrp"><label>리시브 시도</label><input id="t-rcv-att" type="number" min="0" placeholder="0"/></div>
       <div class="fsec">디그 지표</div>
       <div class="fgrp"><label>디그 시도</label><input id="t-dig-att" type="number" min="0" placeholder="0"/></div>
       <div class="fgrp"><label>디그 성공</label><input id="t-dig-ok" type="number" min="0" placeholder="0"/></div>
       <div class="fsec">블로킹 지표</div>
-      <div class="fgrp"><label>블로킹 성공 횟수</label><input id="t-blk-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>블로킹 시도</label><input id="t-blk-att" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>블로킹 성공</label><input id="t-blk-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>블로킹 실패</label><input id="t-blk-err" type="number" min="0" placeholder="0"/></div>
       <div class="fsec">실책</div>
       <div class="fgrp"><label>개인 실책</label><input id="t-err-p" type="number" min="0" placeholder="0" oninput="calcErrT('t')"/></div>
       <div class="fgrp"><label>총 실책 <span style="font-size:10px;color:var(--text2);font-weight:400">(자동계산)</span></label><input id="t-err-t" type="number" readonly style="background:var(--bg3);color:var(--text2)" placeholder="0"/></div>
@@ -589,14 +653,16 @@ body.live-focus{overscroll-behavior-y:contain}
       <div class="fgrp"><label>서브 에이스</label><input id="m-srv-a" type="number" min="0" placeholder="0"/></div>
       <div class="fgrp"><label>서브 범실</label><input id="m-srv-e" type="number" min="0" placeholder="0" oninput="calcErrT('m')"/></div>
       <div class="fsec">리시브 지표</div>
+      <div class="fgrp"><label>리시브 성공</label><input id="m-rcv-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>리시브 미흡</label><input id="m-rcv-miss" type="number" min="0" placeholder="0"/></div>
       <div class="fgrp"><label>리시브 범실</label><input id="m-rcv-e" type="number" min="0" placeholder="0" oninput="calcErrT('m')"/></div>
-      <div class="fgrp"><label>리시브 성공 횟수</label><input id="m-rcv-ok" type="number" min="0" placeholder="0"/></div>
-      <div class="fgrp"><label>리시브 시도</label><input id="m-rcv-att" type="number" min="0" placeholder="0"/></div>
       <div class="fsec">디그 지표</div>
       <div class="fgrp"><label>디그 시도</label><input id="m-dig-att" type="number" min="0" placeholder="0"/></div>
       <div class="fgrp"><label>디그 성공</label><input id="m-dig-ok" type="number" min="0" placeholder="0"/></div>
       <div class="fsec">블로킹 지표</div>
-      <div class="fgrp"><label>블로킹 성공 횟수</label><input id="m-blk-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>블로킹 시도</label><input id="m-blk-att" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>블로킹 성공</label><input id="m-blk-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>블로킹 실패</label><input id="m-blk-err" type="number" min="0" placeholder="0"/></div>
       <div class="fsec">실책</div>
       <div class="fgrp"><label>개인 실책</label><input id="m-err-p" type="number" min="0" placeholder="0" oninput="calcErrT('m')"/></div>
       <div class="fgrp"><label>총 실책 <span style="font-size:10px;color:var(--text2);font-weight:400">(자동계산)</span></label><input id="m-err-t" type="number" readonly style="background:var(--bg3);color:var(--text2)" placeholder="0"/></div>
@@ -639,14 +705,16 @@ body.live-focus{overscroll-behavior-y:contain}
       <div class="fgrp"><label>서브 에이스</label><input id="tour-srv-a" type="number" min="0" placeholder="0"/></div>
       <div class="fgrp"><label>서브 범실</label><input id="tour-srv-e" type="number" min="0" placeholder="0" oninput="calcErrT('tour')"/></div>
       <div class="fsec">리시브 지표</div>
+      <div class="fgrp"><label>리시브 성공</label><input id="tour-rcv-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>리시브 미흡</label><input id="tour-rcv-miss" type="number" min="0" placeholder="0"/></div>
       <div class="fgrp"><label>리시브 범실</label><input id="tour-rcv-e" type="number" min="0" placeholder="0" oninput="calcErrT('tour')"/></div>
-      <div class="fgrp"><label>리시브 성공 횟수</label><input id="tour-rcv-ok" type="number" min="0" placeholder="0"/></div>
-      <div class="fgrp"><label>리시브 시도</label><input id="tour-rcv-att" type="number" min="0" placeholder="0"/></div>
       <div class="fsec">디그 지표</div>
       <div class="fgrp"><label>디그 시도</label><input id="tour-dig-att" type="number" min="0" placeholder="0"/></div>
       <div class="fgrp"><label>디그 성공</label><input id="tour-dig-ok" type="number" min="0" placeholder="0"/></div>
       <div class="fsec">블로킹 지표</div>
-      <div class="fgrp"><label>블로킹 성공 횟수</label><input id="tour-blk-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>블로킹 시도</label><input id="tour-blk-att" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>블로킹 성공</label><input id="tour-blk-ok" type="number" min="0" placeholder="0"/></div>
+      <div class="fgrp"><label>블로킹 실패</label><input id="tour-blk-err" type="number" min="0" placeholder="0"/></div>
       <div class="fsec">실책</div>
       <div class="fgrp"><label>개인 실책</label><input id="tour-err-p" type="number" min="0" placeholder="0" oninput="calcErrT('tour')"/></div>
       <div class="fgrp"><label>총 실책 <span style="font-size:10px;color:var(--text2);font-weight:400">(자동계산)</span></label><input id="tour-err-t" type="number" readonly style="background:var(--bg3);color:var(--text2)" placeholder="0"/></div>
@@ -680,13 +748,13 @@ body.live-focus{overscroll-behavior-y:contain}
       </div>
       <button class="btn btn-sm" style="margin-left:auto" onclick="clearBulkTable()">입력값 전체 지우기</button>
     </div>
-    <p id="bulk-help-text" style="font-size:12px;color:var(--text2);margin:-6px 0 12px">기록이 있는 선수만 값을 입력하세요. 값을 하나도 입력하지 않은 선수는 저장되지 않습니다.</p>
+    <p id="bulk-help-text" style="font-size:12px;color:var(--text2);margin:-6px 0 12px">기록이 있는 선수만 값을 입력하세요. 값을 하나도 입력하지 않은 선수는 저장되지 않습니다. 디그·블로킹 시도는 성공/실패를 포함한 전체 횟수이고, 리시브는 성공·미흡·범실을 각각 입력하면 시도가 자동 계산돼요.</p>
     <div class="tbl-wrap">
       <table class="bulk-tbl" id="bulk-tbl-detail"><thead><tr>
         <th>선수</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th>
         <th class="n">서브에이스</th><th class="n">서브범실</th>
-        <th class="n">리시브범실</th><th class="n">리시브성공</th><th class="n">리시브시도</th>
-        <th class="n">디그시도</th><th class="n">디그성공</th><th class="n">블로킹성공</th><th class="n">개인실책</th>
+        <th class="n">리시브성공</th><th class="n">리시브미흡</th><th class="n">리시브범실</th>
+        <th class="n">디그시도</th><th class="n">디그성공</th><th class="n">블로킹시도</th><th class="n">블로킹성공</th><th class="n">블로킹실패</th><th class="n">개인실책</th>
       </tr></thead><tbody id="bulk-tbody"></tbody></table>
       <table class="bulk-tbl" id="bulk-tbl-simple" style="display:none"><thead><tr>
         <th>선수</th><th>출석</th>
@@ -998,8 +1066,9 @@ function fmtDate(v){
   return s.slice(0,10);
 }
 function numify(d){
-  ['month','att','attS','attE','srvA','srvE','rcvE','rcvOk','rcvAtt','digAtt','digOk','blkOk','errT','errP','num','height','reach']
+  ['month','att','attS','attE','srvA','srvE','rcvE','rcvOk','rcvAtt','digAtt','digOk','blkOk','blkAtt','blkErr','errT','errP','num','height','reach']
   .forEach(k=>{if(d[k]!==undefined&&d[k]!==null)d[k]=parseFloat(d[k])||0;});
+  if(d.att!==undefined){d.blkOk=d.blkOk||0;d.blkErr=d.blkErr||0;d.blkAtt=Math.max(d.blkAtt||0,d.blkOk+d.blkErr);} // 옛 기록(성공만 기록)도 시도 ≥ 성공으로 맞춤
   if(d.date!==undefined&&d.date)d.date=fmtDate(d.date);
   if(d.date&&!d.month)d.month=parseInt(d.date.slice(5,7))||0;
   if(d.gender!==undefined)d.gender=String(d.gender||'male').trim()||'male';
@@ -1103,9 +1172,9 @@ function switchTab(name,el){
   if(name==='live')renderLive();
 }
 function openMo(k){
-  if(k==='train'){eids.train=null;clr(['t-att','t-att-s','t-att-e','t-srv-a','t-srv-e','t-rcv-e','t-rcv-ok','t-rcv-att','t-dig-att','t-dig-ok','t-blk-ok','t-err-t','t-err-p']);gid('t-date').value=new Date().toISOString().slice(0,10);fillRSel('t-player');}
-  if(k==='match'){eids.match=null;clr(['m-opp','m-att','m-att-s','m-att-e','m-srv-a','m-srv-e','m-rcv-e','m-rcv-ok','m-rcv-att','m-dig-att','m-dig-ok','m-blk-ok','m-err-t','m-err-p']);gid('m-date').value=new Date().toISOString().slice(0,10);fillRSel('m-player');}
-  if(k==='tournament'){eids.tournament=null;clr(['tour-opp','tour-att','tour-att-s','tour-att-e','tour-srv-a','tour-srv-e','tour-rcv-e','tour-rcv-ok','tour-rcv-att','tour-dig-att','tour-dig-ok','tour-blk-ok','tour-err-t','tour-err-p']);gid('tour-date').value=new Date().toISOString().slice(0,10);fillRSel('tour-player');}
+  if(k==='train'){eids.train=null;clr(['t-att','t-att-s','t-att-e','t-srv-a','t-srv-e','t-rcv-e','t-rcv-ok','t-rcv-miss','t-dig-att','t-dig-ok','t-blk-att','t-blk-ok','t-blk-err','t-err-t','t-err-p']);gid('t-date').value=new Date().toISOString().slice(0,10);fillRSel('t-player');}
+  if(k==='match'){eids.match=null;clr(['m-opp','m-att','m-att-s','m-att-e','m-srv-a','m-srv-e','m-rcv-e','m-rcv-ok','m-rcv-miss','m-dig-att','m-dig-ok','m-blk-att','m-blk-ok','m-blk-err','m-err-t','m-err-p']);gid('m-date').value=new Date().toISOString().slice(0,10);fillRSel('m-player');}
+  if(k==='tournament'){eids.tournament=null;clr(['tour-opp','tour-att','tour-att-s','tour-att-e','tour-srv-a','tour-srv-e','tour-rcv-e','tour-rcv-ok','tour-rcv-miss','tour-dig-att','tour-dig-ok','tour-blk-att','tour-blk-ok','tour-blk-err','tour-err-t','tour-err-p']);gid('tour-date').value=new Date().toISOString().slice(0,10);fillRSel('tour-player');}
   if(k==='roster'){eids.roster=null;document.getElementById('r-modal-title').textContent='선수 추가';clr(['r-name','r-num','r-grade','r-height','r-reach','r-memo']);gid('r-pos').value='세터';gid('r-gender').value=currentGender==='female'?'female':'male';}
   if(k==='event'){eids.event=null;document.getElementById('ev-modal-title').textContent='일정 추가';clr(['ev-title','ev-loc','ev-memo','ev-time']);gid('ev-date').value='';gid('ev-date-input').value='';if(gid('ev-date-tags'))gid('ev-date-tags').innerHTML='';['training','match','tournament','meeting','other'].forEach(t=>{if(gid('ev-t-'+t))gid('ev-t-'+t).checked=(t==='training');});}
   document.getElementById('mo-'+k).classList.add('open');
@@ -1135,7 +1204,7 @@ async function saveTrain(){
   const dateVal=gs('t-date');if(!dateVal){toast('날짜를 입력하세요.','error');return;}
   const month=parseInt(dateVal.slice(5,7));
   const attE=gv('t-att-e'),srvE=gv('t-srv-e'),rcvE=gv('t-rcv-e'),errP=gv('t-err-p');
-  const data={date:dateVal,month,name,pos:gs('t-pos'),att:gv('t-att'),attS:gv('t-att-s'),attE,srvA:gv('t-srv-a'),srvE,rcvS:0,rcvE,rcvOk:gv('t-rcv-ok'),rcvAtt:gv('t-rcv-att'),digAtt:gv('t-dig-att'),digOk:gv('t-dig-ok'),blkOk:gv('t-blk-ok'),errT:attE+srvE+rcvE+errP,errP};
+  const data={date:dateVal,month,name,pos:gs('t-pos'),att:gv('t-att'),attS:gv('t-att-s'),attE,srvA:gv('t-srv-a'),srvE,rcvS:0,rcvE,rcvOk:gv('t-rcv-ok'),rcvAtt:gv('t-rcv-ok')+gv('t-rcv-miss')+rcvE,digAtt:Math.max(gv('t-dig-att'),gv('t-dig-ok')),digOk:gv('t-dig-ok'),blkAtt:Math.max(gv('t-blk-att'),gv('t-blk-ok')+gv('t-blk-err')),blkOk:gv('t-blk-ok'),blkErr:gv('t-blk-err'),errT:attE+srvE+rcvE+errP,errP};
   setBtn('t-save-btn',true);
   const {data:newId, error}=await callWriteRpc('add_training',{p_team_id:TEAM_ID, p_payload:data});
   if(!error){data.id=newId;db.training.push(data);toast('훈련 데이터 저장됨','success');closeMo('train');renderTraining();}
@@ -1146,7 +1215,7 @@ async function saveMatch(){
   const name=gs('m-name'),opp=gs('m-opp'),date=gs('m-date');
   if(!name||!opp||!date){toast('날짜, 상대팀, 선수명을 입력하세요.','error');return;}
   const attE=gv('m-att-e'),srvE=gv('m-srv-e'),rcvE=gv('m-rcv-e'),errP=gv('m-err-p');
-  const data={date,opp,result:gs('m-result'),name,pos:gs('m-pos'),att:gv('m-att'),attS:gv('m-att-s'),attE,srvA:gv('m-srv-a'),srvE,rcvS:0,rcvE,rcvOk:gv('m-rcv-ok'),rcvAtt:gv('m-rcv-att'),digAtt:gv('m-dig-att'),digOk:gv('m-dig-ok'),blkOk:gv('m-blk-ok'),errT:attE+srvE+rcvE+errP,errP};
+  const data={date,opp,result:gs('m-result'),name,pos:gs('m-pos'),att:gv('m-att'),attS:gv('m-att-s'),attE,srvA:gv('m-srv-a'),srvE,rcvS:0,rcvE,rcvOk:gv('m-rcv-ok'),rcvAtt:gv('m-rcv-ok')+gv('m-rcv-miss')+rcvE,digAtt:Math.max(gv('m-dig-att'),gv('m-dig-ok')),digOk:gv('m-dig-ok'),blkAtt:Math.max(gv('m-blk-att'),gv('m-blk-ok')+gv('m-blk-err')),blkOk:gv('m-blk-ok'),blkErr:gv('m-blk-err'),errT:attE+srvE+rcvE+errP,errP};
   setBtn('m-save-btn',true);
   const {data:newId, error}=await callWriteRpc('add_match',{p_team_id:TEAM_ID, p_payload:data});
   if(!error){data.id=newId;db.match.push(data);toast('교류전 데이터 저장됨','success');closeMo('match');renderMatchTab();}
@@ -1240,6 +1309,7 @@ function editEvent(id){
   gid('ev-time').value=e.time||'';gid('ev-loc').value=e.loc||'';gid('ev-memo').value=e.memo||'';
   gid('mo-event').classList.add('open');
 }
+const rcvMiss=d=>Math.max(0,(d.rcvAtt||0)-(d.rcvOk||0)-(d.rcvE||0)); // 리시브 미흡 = 시도 − 성공 − 범실
 function cs(d){
   const ae=d.att>0?((d.attS-d.attE)/d.att*100):0,ar=d.att>0?(d.attS/d.att*100):0,rr=d.rcvAtt>0?(d.rcvOk/d.rcvAtt*100):0,dr=d.digAtt>0?(d.digOk/d.digAtt*100):0;
   const errT=(d.attE||0)+(d.srvE||0)+(d.rcvE||0)+(d.errP||0);
@@ -1258,13 +1328,13 @@ function renderOverview(){
   const tA=lt.reduce((s,d)=>s+d.att,0),tAS=lt.reduce((s,d)=>s+d.attS,0),tAE=lt.reduce((s,d)=>s+d.attE,0);
   const tRA=lt.reduce((s,d)=>s+d.rcvAtt,0),tRO=lt.reduce((s,d)=>s+d.rcvOk,0);
   const tSA=lt.reduce((s,d)=>s+d.srvA,0),tET=lt.reduce((s,d)=>s+(d.attE||0)+(d.srvE||0)+(d.rcvE||0)+(d.errP||0),0);
-  const tBL=lt.reduce((s,d)=>s+(d.blkOk||0),0);
+  const tBL=lt.reduce((s,d)=>s+(d.blkOk||0),0),tBA=lt.reduce((s,d)=>s+(d.blkAtt||0),0),tBF=lt.reduce((s,d)=>s+(d.blkErr||0),0);
   const periodLabel=isTrain?lm+'월':srcData.length?'전체':'전체';
   gid('ov-metrics').innerHTML=`
     <div class="mc"><div class="ml">${periodLabel} 공격 효율</div><div class="mv" style="color:#1D9E75">${tA>0?((tAS-tAE)/tA*100).toFixed(1):0}%</div><div class="ms">${srcLabel} 합산</div></div>
     <div class="mc"><div class="ml">${periodLabel} 리시브 성공률</div><div class="mv">${tRA>0?(tRO/tRA*100).toFixed(1):0}%</div><div class="ms">${srcLabel} 합산</div></div>
     <div class="mc"><div class="ml">${periodLabel} 서브 에이스</div><div class="mv">${tSA}</div><div class="ms">${srcLabel} 합산</div></div>
-    <div class="mc"><div class="ml">${periodLabel} 블로킹 성공</div><div class="mv">${tBL}</div><div class="ms">${srcLabel} 합산</div></div>
+    <div class="mc"><div class="ml">${periodLabel} 블로킹 성공</div><div class="mv">${tBL}</div><div class="ms">시도 ${tBA} · 실패 ${tBF}</div></div>
     <div class="mc"><div class="ml">${periodLabel} 총 실책</div><div class="mv" style="color:#A32D2D">${tET}</div><div class="ms">${srcLabel} 합산</div></div>
     <div class="mc"><div class="ml">선수단</div><div class="mv">${gFilter(db.roster).length}</div><div class="ms">명</div></div>
     <div class="mc"><div class="ml">${isTrain?'훈련 기록':isTour?'대회 기록':'교류전 기록'}</div><div class="mv">${srcData.length}</div><div class="ms">건</div></div>`;
@@ -1411,20 +1481,20 @@ function renderTraining(){
   ftn.innerHTML='<option value="">전체</option>'+names.map(n=>`<option ${n===curNm?'selected':''}>${esc(n)}</option>`).join('');
   const rows=gFilter(db.training).filter(d=>(!pos||d.pos===pos)&&(!mon||d.month===parseInt(mon))&&(!nm||d.name===nm)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const tbody=gid('t-tbody');
-  if(!rows.length){tbody.innerHTML='<tr><td colspan="19" class="empty">조회된 데이터가 없습니다.</td></tr>';return;}
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="23" class="empty">조회된 데이터가 없습니다.</td></tr>';return;}
   const html=[];
   groupSessions(rows,d=>d.date+'|'+(d.note?'S':'D')).forEach(g=>{
     const date=g[0].date,simple=!!g[0].note,memo=g.find(d=>d.memo)?.memo||'';
     // 같은 날이어도 상세 기록과 간단(출석만) 기록은 서로 다른 세션으로 취급 — 섞여 있으면 하나로 합치지 않고 따로따로 표시함
     // 간단 모드(출석만) 세션은 선수마다 같은 배지를 반복하지 않고, 메모 탭처럼 "참가인원 + 메모" 요약 한 줄로만 보여줌
     if(simple){
-      html.push(`<tr><td>${date}</td><td colspan="17" style="padding:10px 12px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:var(--text2);font-size:12.5px"><button class="btn btn-sm" onclick="showAttendees('training','${escJsAttr(date)}','-','-',true)">👥 ${g.length}명 참가</button>${memo?`<span>📝 ${esc(memo)}</span>`:'<span style="color:var(--text3)">메모 없음</span>'}</div></td><td class="act-td"><button class="btn btn-sm" onclick="delSession('training',${idsJsArr(g.map(d=>d.id))})" style="color:var(--red)">삭제</button></td></tr>`);
+      html.push(`<tr><td>${date}</td><td colspan="21" style="padding:10px 12px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:var(--text2);font-size:12.5px"><button class="btn btn-sm" onclick="showAttendees('training','${escJsAttr(date)}','-','-',true)">👥 ${g.length}명 참가</button>${memo?`<span>📝 ${esc(memo)}</span>`:'<span style="color:var(--text3)">메모 없음</span>'}</div></td><td class="act-td"><button class="btn btn-sm" onclick="delSession('training',${idsJsArr(g.map(d=>d.id))})" style="color:var(--red)">삭제</button></td></tr>`);
       return;
     }
     // 상세 모드 세션의 메모는 이 원본 표에는 안 띄우고 "메모" 탭에서만 확인하도록 함
     g.forEach(d=>{
       const s=cs(d);
-      html.push(`<tr><td>${d.date}</td><td><b>${esc(d.name)}</b></td><td>${esc(d.pos)}</td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${d.blkOk||0}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td class="act-td"><button class="btn btn-sm" onclick="delTrain('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);
+      html.push(`<tr><td>${d.date}</td><td><b>${esc(d.name)}</b></td><td>${esc(d.pos)}</td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvOk}</td><td class="n">${rcvMiss(d)}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${d.blkAtt}</td><td class="n">${d.blkOk}</td><td class="n">${d.blkErr}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td class="act-td"><button class="btn btn-sm" onclick="delTrain('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);
     });
   });
   tbody.innerHTML=html.join('');
@@ -1432,7 +1502,7 @@ function renderTraining(){
 function renderMatchTab(){
   const rows=[...gFilter(db.match)].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const tbody=gid('m-tbody');
-  if(!rows.length){tbody.innerHTML='<tr><td colspan="20" class="empty">조회된 데이터가 없습니다.</td></tr>';return;}
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="24" class="empty">조회된 데이터가 없습니다.</td></tr>';return;}
   const html=[];
   groupSessions(rows,d=>d.date+'|'+d.opp+'|'+d.result+'|'+(d.note?'S':'D')).forEach(g=>{
     const{date,opp,result}=g[0];
@@ -1440,13 +1510,13 @@ function renderMatchTab(){
     // 같은 날+상대+결과여도 상세 기록과 간단(출석만) 기록은 서로 다른 세션으로 취급 — 섞여 있으면 하나로 합치지 않고 따로따로 표시함
     const simple=!!g[0].note,memo=g.find(d=>d.memo)?.memo||'';
     if(simple){
-      html.push(`<tr><td>${date}</td><td>${esc(opp)}</td><td><span class="badge ${cls}">${result}</span></td><td colspan="16" style="padding:10px 12px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:var(--text2);font-size:12.5px"><button class="btn btn-sm" onclick="showAttendees('match','${escJsAttr(date)}','${escJsAttr(opp)}','${escJsAttr(result)}',true)">👥 ${g.length}명 참가</button>${memo?`<span>📝 ${esc(memo)}</span>`:'<span style="color:var(--text3)">메모 없음</span>'}</div></td><td class="act-td"><button class="btn btn-sm" onclick="delSession('match',${idsJsArr(g.map(d=>d.id))})" style="color:var(--red)">삭제</button></td></tr>`);
+      html.push(`<tr><td>${date}</td><td>${esc(opp)}</td><td><span class="badge ${cls}">${result}</span></td><td colspan="20" style="padding:10px 12px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:var(--text2);font-size:12.5px"><button class="btn btn-sm" onclick="showAttendees('match','${escJsAttr(date)}','${escJsAttr(opp)}','${escJsAttr(result)}',true)">👥 ${g.length}명 참가</button>${memo?`<span>📝 ${esc(memo)}</span>`:'<span style="color:var(--text3)">메모 없음</span>'}</div></td><td class="act-td"><button class="btn btn-sm" onclick="delSession('match',${idsJsArr(g.map(d=>d.id))})" style="color:var(--red)">삭제</button></td></tr>`);
       return;
     }
     // 상세 모드 세션의 메모는 이 원본 표에는 안 띄우고 "메모" 탭에서만 확인하도록 함
     g.forEach(d=>{
       const s=cs(d);
-      html.push(`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${d.blkOk||0}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td class="act-td"><button class="btn btn-sm" onclick="delMatch('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);
+      html.push(`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvOk}</td><td class="n">${rcvMiss(d)}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${d.blkAtt}</td><td class="n">${d.blkOk}</td><td class="n">${d.blkErr}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td class="act-td"><button class="btn btn-sm" onclick="delMatch('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);
     });
   });
   tbody.innerHTML=html.join('');
@@ -1482,12 +1552,12 @@ function pstatSectionHtml(section,title,rows,oppLabel){
   if(!oppLabel){
     // 훈련: 상대/결과 없음
     table=view==='pct'
-      ?`<table><thead><tr><th>날짜</th><th class="n">공격효율</th><th class="n">공격성공률</th><th class="n">리시브성공률</th><th class="n">디그성공률</th><th class="n">서브에이스</th><th class="n">블로킹</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{if(d.note)return`<tr><td>${d.date}</td><td colspan="7" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td></tr>`;const s=cs(d);return`<tr><td>${d.date}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${s.rr}%</td><td class="n">${s.dr}%</td><td class="n">${d.srvA}</td><td class="n">${d.blkOk||0}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`
-      :`<table><thead><tr><th>날짜</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">서브에이스</th><th class="n">서브범실</th><th class="n">리시브범실</th><th class="n">리시브성공</th><th class="n">리시브시도</th><th class="n">디그시도</th><th class="n">디그성공</th><th class="n">블로킹성공</th><th class="n">총실책</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{if(d.note)return`<tr><td>${d.date}</td><td colspan="13" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td></tr>`;const s=cs(d);return`<tr><td>${d.date}</td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${d.rcvOk}</td><td class="n">${d.rcvAtt}</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${d.blkOk||0}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`;
+      ?`<table><thead><tr><th>날짜</th><th class="n">공격효율</th><th class="n">공격성공률</th><th class="n">리시브성공률</th><th class="n">디그성공률</th><th class="n">서브에이스</th><th class="n">블로킹성공</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{if(d.note)return`<tr><td>${d.date}</td><td colspan="7" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td></tr>`;const s=cs(d);return`<tr><td>${d.date}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${s.rr}%</td><td class="n">${s.dr}%</td><td class="n">${d.srvA}</td><td class="n">${d.blkOk}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`
+      :`<table><thead><tr><th>날짜</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">서브에이스</th><th class="n">서브범실</th><th class="n">리시브성공</th><th class="n">리시브미흡</th><th class="n">리시브범실</th><th class="n">디그시도</th><th class="n">디그성공</th><th class="n">블로킹시도</th><th class="n">블로킹성공</th><th class="n">블로킹실패</th><th class="n">총실책</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{if(d.note)return`<tr><td>${d.date}</td><td colspan="15" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td></tr>`;const s=cs(d);return`<tr><td>${d.date}</td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvOk}</td><td class="n">${rcvMiss(d)}</td><td class="n">${d.rcvE}</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${d.blkAtt}</td><td class="n">${d.blkOk}</td><td class="n">${d.blkErr}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`;
   }else{
     table=view==='pct'
-      ?`<table><thead><tr><th>날짜</th><th>${oppLabel}</th><th>결과</th><th class="n">공격효율</th><th class="n">공격성공률</th><th class="n">리시브성공률</th><th class="n">서브에이스</th><th class="n">블로킹</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';if(d.note)return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td colspan="6" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td></tr>`;const s=cs(d);return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${s.rr}%</td><td class="n">${d.srvA}</td><td class="n">${d.blkOk||0}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`
-      :`<table><thead><tr><th>날짜</th><th>${oppLabel}</th><th>결과</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">서브에이스</th><th class="n">서브범실</th><th class="n">리시브범실</th><th class="n">리시브성공</th><th class="n">리시브시도</th><th class="n">디그시도</th><th class="n">디그성공</th><th class="n">블로킹성공</th><th class="n">총실책</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';if(d.note)return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td colspan="13" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td></tr>`;const s=cs(d);return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${d.rcvOk}</td><td class="n">${d.rcvAtt}</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${d.blkOk||0}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`;
+      ?`<table><thead><tr><th>날짜</th><th>${oppLabel}</th><th>결과</th><th class="n">공격효율</th><th class="n">공격성공률</th><th class="n">리시브성공률</th><th class="n">서브에이스</th><th class="n">블로킹성공</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';if(d.note)return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td colspan="6" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td></tr>`;const s=cs(d);return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${s.rr}%</td><td class="n">${d.srvA}</td><td class="n">${d.blkOk}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`
+      :`<table><thead><tr><th>날짜</th><th>${oppLabel}</th><th>결과</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">서브에이스</th><th class="n">서브범실</th><th class="n">리시브성공</th><th class="n">리시브미흡</th><th class="n">리시브범실</th><th class="n">디그시도</th><th class="n">디그성공</th><th class="n">블로킹시도</th><th class="n">블로킹성공</th><th class="n">블로킹실패</th><th class="n">총실책</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(d=>{const cls=d.result==='승'?'b-green':d.result==='패'?'b-red':'b-amber';if(d.note)return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td colspan="15" style="color:var(--text2);font-size:12.5px">📋 ${esc(d.note)}</td></tr>`;const s=cs(d);return`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvOk}</td><td class="n">${rcvMiss(d)}</td><td class="n">${d.rcvE}</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${d.blkAtt}</td><td class="n">${d.blkOk}</td><td class="n">${d.blkErr}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td></tr>`;}).join('')}</tbody></table>`;
   }
   return`<div class="card">${header}<div class="tbl-wrap">${table}</div></div>`;
 }
@@ -1649,7 +1719,7 @@ async function saveTournament(){
   const name=gs('tour-name'),opp=gs('tour-opp'),date=gs('tour-date');
   if(!name||!opp||!date){toast('날짜, 대회명, 선수명을 입력하세요.','error');return;}
   const attE=gv('tour-att-e'),srvE=gv('tour-srv-e'),rcvE=gv('tour-rcv-e'),errP=gv('tour-err-p');
-  const data={date,opp,result:gs('tour-result'),name,pos:gs('tour-pos'),att:gv('tour-att'),attS:gv('tour-att-s'),attE,srvA:gv('tour-srv-a'),srvE,rcvS:0,rcvE,rcvOk:gv('tour-rcv-ok'),rcvAtt:gv('tour-rcv-att'),digAtt:gv('tour-dig-att'),digOk:gv('tour-dig-ok'),blkOk:gv('tour-blk-ok'),errT:attE+srvE+rcvE+errP,errP};
+  const data={date,opp,result:gs('tour-result'),name,pos:gs('tour-pos'),att:gv('tour-att'),attS:gv('tour-att-s'),attE,srvA:gv('tour-srv-a'),srvE,rcvS:0,rcvE,rcvOk:gv('tour-rcv-ok'),rcvAtt:gv('tour-rcv-ok')+gv('tour-rcv-miss')+rcvE,digAtt:Math.max(gv('tour-dig-att'),gv('tour-dig-ok')),digOk:gv('tour-dig-ok'),blkAtt:Math.max(gv('tour-blk-att'),gv('tour-blk-ok')+gv('tour-blk-err')),blkOk:gv('tour-blk-ok'),blkErr:gv('tour-blk-err'),errT:attE+srvE+rcvE+errP,errP};
   setBtn('tour-save-btn',true);
   const {data:newId, error}=await callWriteRpc('add_tournament',{p_team_id:TEAM_ID, p_payload:data});
   if(!error){data.id=newId;db.tournament.push(data);toast('대회 데이터 저장됨','success');closeMo('tournament');renderTournamentTab();}
@@ -1691,7 +1761,7 @@ function setBulkMode(mode){
   gid('bulk-tbl-simple').style.display = mode==='simple' ? 'table' : 'none';
   gid('bulk-help-text').textContent = mode==='simple'
     ? '세부 스탯 없이, 출석한 선수만 체크하고 저장하세요. 통계 평균에는 포함되지 않고 "출석 기록"으로만 남아요.'
-    : '기록이 있는 선수만 값을 입력하세요. 값을 하나도 입력하지 않은 선수는 저장되지 않습니다.';
+    : '기록이 있는 선수만 값을 입력하세요. 값을 하나도 입력하지 않은 선수는 저장되지 않습니다. 디그·블로킹 시도는 성공/실패를 포함한 전체 횟수이고, 리시브는 성공·미흡·범실을 각각 입력하면 시도가 자동 계산돼요.';
   renderBulkTable();
 }
 function renderBulkTable(){
@@ -1705,8 +1775,8 @@ function renderBulkTable(){
   }
   const tbody=gid('bulk-tbody');
   if(!tbody)return;
-  if(!rows.length){tbody.innerHTML='<tr><td colspan="12" class="empty">선수가 없습니다. 먼저 선수를 추가하세요.</td></tr>';return;}
-  const fields=['att','att-s','att-e','srv-a','srv-e','rcv-e','rcv-ok','rcv-att','dig-att','dig-ok','blk-ok','err-p'];
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="15" class="empty">선수가 없습니다. 먼저 선수를 추가하세요.</td></tr>';return;}
+  const fields=['att','att-s','att-e','srv-a','srv-e','rcv-ok','rcv-miss','rcv-e','dig-att','dig-ok','blk-att','blk-ok','blk-err','err-p'];
   tbody.innerHTML=rows.map(r=>`<tr data-rid="${r.id}"><td><b>${r.num?'#'+r.num+' ':''}${esc(r.name)}</b><div style="font-size:11px;color:var(--text2);font-weight:400">${esc(r.pos)}</div></td>${fields.map(f=>`<td class="n"><input type="number" min="0" placeholder="0" data-f="${f}"/></td>`).join('')}</tr>`).join('');
 }
 function clearBulkTable(){
@@ -1734,17 +1804,18 @@ async function saveBulk(){
     const rid=row.dataset.rid;
     const r=db.roster.find(x=>String(x.id)===String(rid));
     if(!r)continue;
-    let att=0,attS=0,attE=0,srvA=0,srvE=0,rcvE=0,rcvOk=0,rcvAtt=0,digAtt=0,digOk=0,blkOk=0,errP=0,note=null;
+    let att=0,attS=0,attE=0,srvA=0,srvE=0,rcvE=0,rcvOk=0,rcvAtt=0,digAtt=0,digOk=0,blkAtt=0,blkOk=0,blkErr=0,errP=0,note=null;
     if(simple){
       const checked=row.querySelector('[data-attend]')?.checked;
       if(!checked)continue;
       note='참여함(간단 모드)';
     }else{
       const val=(f)=>parseFloat(row.querySelector(`[data-f="${f}"]`)?.value)||0;
-      att=val('att');attS=val('att-s');attE=val('att-e');srvA=val('srv-a');srvE=val('srv-e');rcvE=val('rcv-e');rcvOk=val('rcv-ok');rcvAtt=val('rcv-att');digAtt=val('dig-att');digOk=val('dig-ok');blkOk=val('blk-ok');errP=val('err-p');
-      if(!(att||attS||attE||srvA||srvE||rcvE||rcvOk||rcvAtt||digAtt||digOk||blkOk||errP))continue;
+      att=val('att');attS=val('att-s');attE=val('att-e');srvA=val('srv-a');srvE=val('srv-e');rcvE=val('rcv-e');rcvOk=val('rcv-ok');const rcvMs=val('rcv-miss');digAtt=val('dig-att');digOk=val('dig-ok');blkAtt=val('blk-att');blkOk=val('blk-ok');blkErr=val('blk-err');errP=val('err-p');
+      if(!(att||attS||attE||srvA||srvE||rcvE||rcvOk||rcvMs||digAtt||digOk||blkAtt||blkOk||blkErr||errP))continue;
+      rcvAtt=rcvOk+rcvMs+rcvE;digAtt=Math.max(digAtt,digOk);blkAtt=Math.max(blkAtt,blkOk+blkErr);
     }
-    const data={date,name:r.name,pos:r.pos,att,attS,attE,srvA,srvE,rcvS:0,rcvE,rcvOk,rcvAtt,digAtt,digOk,blkOk,errT:attE+srvE+rcvE+errP,errP,note,memo};
+    const data={date,name:r.name,pos:r.pos,att,attS,attE,srvA,srvE,rcvS:0,rcvE,rcvOk,rcvAtt,digAtt,digOk,blkAtt,blkOk,blkErr,errT:attE+srvE+rcvE+errP,errP,note,memo};
     if(type==='training'){data.month=parseInt(date.slice(5,7));}
     else{data.opp=opp;data.result=result;}
     const {data:newId, error}=await callWriteRpc(fnName,{p_team_id:TEAM_ID, p_payload:data});
@@ -1774,7 +1845,7 @@ async function delTournament(id){
 function renderTournamentTab(){
   const rows=[...gFilter(db.tournament)].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const tbody=gid('tour-tbody');
-  if(!rows.length){tbody.innerHTML='<tr><td colspan="20" class="empty">대회 데이터가 없습니다.</td></tr>';return;}
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="24" class="empty">대회 데이터가 없습니다.</td></tr>';return;}
   const html=[];
   groupSessions(rows,d=>d.date+'|'+d.opp+'|'+d.result+'|'+(d.note?'S':'D')).forEach(g=>{
     const{date,opp,result}=g[0];
@@ -1782,19 +1853,19 @@ function renderTournamentTab(){
     // 같은 날+상대+결과여도 상세 기록과 간단(출석만) 기록은 서로 다른 세션으로 취급 — 섞여 있으면 하나로 합치지 않고 따로따로 표시함
     const simple=!!g[0].note,memo=g.find(d=>d.memo)?.memo||'';
     if(simple){
-      html.push(`<tr><td>${date}</td><td>${esc(opp)}</td><td><span class="badge ${cls}">${result}</span></td><td colspan="16" style="padding:10px 12px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:var(--text2);font-size:12.5px"><button class="btn btn-sm" onclick="showAttendees('tournament','${escJsAttr(date)}','${escJsAttr(opp)}','${escJsAttr(result)}',true)">👥 ${g.length}명 참가</button>${memo?`<span>📝 ${esc(memo)}</span>`:'<span style="color:var(--text3)">메모 없음</span>'}</div></td><td class="act-td"><button class="btn btn-sm" onclick="delSession('tournament',${idsJsArr(g.map(d=>d.id))})" style="color:var(--red)">삭제</button></td></tr>`);
+      html.push(`<tr><td>${date}</td><td>${esc(opp)}</td><td><span class="badge ${cls}">${result}</span></td><td colspan="20" style="padding:10px 12px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:var(--text2);font-size:12.5px"><button class="btn btn-sm" onclick="showAttendees('tournament','${escJsAttr(date)}','${escJsAttr(opp)}','${escJsAttr(result)}',true)">👥 ${g.length}명 참가</button>${memo?`<span>📝 ${esc(memo)}</span>`:'<span style="color:var(--text3)">메모 없음</span>'}</div></td><td class="act-td"><button class="btn btn-sm" onclick="delSession('tournament',${idsJsArr(g.map(d=>d.id))})" style="color:var(--red)">삭제</button></td></tr>`);
       return;
     }
     // 상세 모드 세션의 메모는 이 원본 표에는 안 띄우고 "메모" 탭에서만 확인하도록 함
     g.forEach(d=>{
       const s=cs(d);
-      html.push(`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${d.blkOk||0}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td class="act-td"><button class="btn btn-sm" onclick="delTournament('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);
+      html.push(`<tr><td>${d.date}</td><td>${esc(d.opp)}</td><td><span class="badge ${cls}">${d.result}</span></td><td><b>${esc(d.name)}</b></td><td class="n">${d.att}</td><td class="n">${d.attS}</td><td class="n">${d.attE}</td><td class="n">${s.ae}%</td><td class="n">${s.ar}%</td><td class="n">${d.srvA}</td><td class="n">${d.srvE}</td><td class="n">${d.rcvOk}</td><td class="n">${rcvMiss(d)}</td><td class="n">${d.rcvE}</td><td class="n">${s.rr}%</td><td class="n">${d.digAtt}</td><td class="n">${d.digOk}</td><td class="n">${s.dr}%</td><td class="n">${d.blkAtt}</td><td class="n">${d.blkOk}</td><td class="n">${d.blkErr}</td><td class="n">${s.errT}</td><td class="n">${d.errP}</td><td class="act-td"><button class="btn btn-sm" onclick="delTournament('${d.id}')" style="color:var(--red)">삭제</button></td></tr>`);
     });
   });
   tbody.innerHTML=html.join('');
 }
 // ============== 실시간 기록: 선수를 탭하고 버튼을 눌러 횟수를 쌓고, 끝나면 기존 기록으로 저장 ==============
-const LIVE_FIELDS=['att','attS','attE','srvA','srvE','rcvE','rcvOk','rcvAtt','digAtt','digOk','blkOk','errP'];
+const LIVE_FIELDS=['att','attS','attE','srvA','srvE','rcvE','rcvOk','rcvAtt','digAtt','digOk','blkAtt','blkOk','blkErr','errP'];
 const LIVE_ACTS=[
   {k:'atkS',g:'공격',label:'공격 득점',cls:'g',eff:{att:1,attS:1}},
   {k:'atkN',g:'공격',label:'공격 (득점X)',eff:{att:1}},
@@ -1805,8 +1876,10 @@ const LIVE_ACTS=[
   {k:'rcvN',g:'리시브',label:'리시브 미흡',eff:{rcvAtt:1}},
   {k:'rcvE',g:'리시브',label:'리시브 범실',cls:'r',eff:{rcvAtt:1,rcvE:1}},
   {k:'digO',g:'디그',label:'디그 성공',cls:'g',eff:{digAtt:1,digOk:1}},
-  {k:'digN',g:'디그',label:'디그 실패',eff:{digAtt:1}},
-  {k:'blk',g:'블로킹',label:'블로킹 성공',cls:'g',eff:{blkOk:1}},
+  {k:'digN',g:'디그',label:'디그 시도 (성공X)',eff:{digAtt:1}},
+  {k:'blk',g:'블로킹',label:'블로킹 성공',cls:'g',eff:{blkAtt:1,blkOk:1}},
+  {k:'blkN',g:'블로킹',label:'블로킹 시도 (그 외)',eff:{blkAtt:1}},
+  {k:'blkE',g:'블로킹',label:'블로킹 실패',cls:'r',eff:{blkAtt:1,blkErr:1}},
   {k:'errP',g:'실책',label:'개인 실책',cls:'r',eff:{errP:1}}
 ];
 let live=null,liveSetupType='training',liveSheetPid=null,liveWake=null;
@@ -1898,7 +1971,7 @@ function liveSlotHtml(s){
   if(!r)return`<button class="lv-slot empty${sel}" onclick="liveSlotTap('${s}')"><span class="lv-sn">${s}</span><span class="lv-plus">+</span></button>`;
   const t=liveTotals(r.id);
   const n=live.events.filter(e=>String(e.pid)===String(r.id)&&e.set===live.set).length;
-  return`<button class="lv-slot${sel}" onclick="liveSlotTap('${s}')"><span class="lv-sn">${s}</span><span class="lv-nm">${r.num?'#'+r.num+' ':''}${esc(r.name)}</span><span class="lv-ps">${esc(r.pos)}</span><span class="lv-sm">득점 ${t.attS}/${t.att} 서브 ${t.srvA}<br>리시 ${t.rcvOk}/${t.rcvAtt} 디그 ${t.digOk}/${t.digAtt}<br>블록 ${t.blkOk} 실책 ${t.attE+t.srvE+t.rcvE+t.errP}</span>${n?`<span class="lv-badge">이번 세트 ${n}</span>`:''}</button>`;
+  return`<button class="lv-slot${sel}" onclick="liveSlotTap('${s}')"><span class="lv-sn">${s}</span><span class="lv-nm">${r.num?'#'+r.num+' ':''}${esc(r.name)}</span><span class="lv-ps">${esc(r.pos)}</span><span class="lv-sm">득점 ${t.attS}/${t.att} 서브 ${t.srvA}<br>리시 ${t.rcvOk}/${t.rcvAtt} 디그 ${t.digOk}/${t.digAtt}<br>블록 ${t.blkOk}/${t.blkAtt} 실책 ${t.attE+t.srvE+t.rcvE+t.errP}</span>${n?`<span class="lv-badge">이번 세트 ${n}</span>`:''}</button>`;
 }
 function renderLiveMain(){
   if(!live)return;
@@ -1989,7 +2062,9 @@ let liveFlash=null;
 function liveFocus(on){document.body.classList.toggle('live-focus',!!on);}
 function liveActionsHtml(r){
   const groups=[...new Set(LIVE_ACTS.map(a=>a.g))];
-  return groups.map(g=>`<div class="lv-grp"><div class="lv-gl">${g}</div><div class="lv-btns">${LIVE_ACTS.filter(a=>a.g===g).map(a=>{
+  const tt=liveTotals(r.id);
+  const gsum={'공격':`시도 ${tt.att} · 득점 ${tt.attS}`,'서브':`에이스 ${tt.srvA}`,'리시브':`시도 ${tt.rcvAtt} · 성공 ${tt.rcvOk}`,'디그':`시도 ${tt.digAtt} · 성공 ${tt.digOk}`,'블로킹':`시도 ${tt.blkAtt} · 성공 ${tt.blkOk} · 실패 ${tt.blkErr}`};
+  return groups.map(g=>`<div class="lv-grp"><div class="lv-gl">${g}${gsum[g]?` <span class="lv-gs">${gsum[g]}</span>`:''}</div><div class="lv-btns">${LIVE_ACTS.filter(a=>a.g===g).map(a=>{
     const c=live.events.filter(e=>String(e.pid)===String(r.id)&&e.act===a.k&&e.set===live.set).length;
     return`<div class="lv-cell ${a.cls||''}"><button class="lv-btn" onclick="liveAdd('${r.id}','${a.k}')"><span>${a.label}</span><span class="lv-cnt">${c}</span></button><button class="lv-minus" onclick="liveSub('${r.id}','${a.k}')" aria-label="${a.label} 하나 빼기">−</button></div>`;
   }).join('')}</div></div>`).join('');
@@ -2060,7 +2135,7 @@ function openLiveFinish(){
   gid('livefin-memo').value='';
   const sets=Math.max(1,...live.events.map(e=>e.set));
   gid('livefin-info').textContent=`${liveTypeLabel(live.type)} · ${live.date}${live.opp?' · '+live.opp:''} · ${sets}세트 기록. 선수별 합계가 ${liveTypeLabel(live.type)} 기록 1건씩으로 저장돼요 (세트별 내용은 합산되어 저장).`;
-  gid('livefin-table').innerHTML=`<table><thead><tr><th>선수</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">서브에이스</th><th class="n">서브범실</th><th class="n">리시브성공</th><th class="n">리시브시도</th><th class="n">리시브범실</th><th class="n">디그성공</th><th class="n">디그시도</th><th class="n">블로킹</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(r=>{const t=liveTotals(r.id);return`<tr><td><b>${esc(r.name)}</b></td><td class="n">${t.att}</td><td class="n">${t.attS}</td><td class="n">${t.attE}</td><td class="n">${t.srvA}</td><td class="n">${t.srvE}</td><td class="n">${t.rcvOk}</td><td class="n">${t.rcvAtt}</td><td class="n">${t.rcvE}</td><td class="n">${t.digOk}</td><td class="n">${t.digAtt}</td><td class="n">${t.blkOk}</td><td class="n">${t.errP}</td></tr>`;}).join('')}</tbody></table>`;
+  gid('livefin-table').innerHTML=`<table><thead><tr><th>선수</th><th class="n">공격시도</th><th class="n">공격득점</th><th class="n">공격범실</th><th class="n">서브에이스</th><th class="n">서브범실</th><th class="n">리시브성공</th><th class="n">리시브미흡</th><th class="n">리시브범실</th><th class="n">디그시도</th><th class="n">디그성공</th><th class="n">블로킹시도</th><th class="n">블로킹성공</th><th class="n">블로킹실패</th><th class="n">개인실책</th></tr></thead><tbody>${rows.map(r=>{const t=liveTotals(r.id);return`<tr><td><b>${esc(r.name)}</b></td><td class="n">${t.att}</td><td class="n">${t.attS}</td><td class="n">${t.attE}</td><td class="n">${t.srvA}</td><td class="n">${t.srvE}</td><td class="n">${t.rcvOk}</td><td class="n">${t.rcvAtt-t.rcvOk-t.rcvE}</td><td class="n">${t.rcvE}</td><td class="n">${t.digAtt}</td><td class="n">${t.digOk}</td><td class="n">${t.blkAtt}</td><td class="n">${t.blkOk}</td><td class="n">${t.blkErr}</td><td class="n">${t.errP}</td></tr>`;}).join('')}</tbody></table>`;
   gid('mo-livefin').classList.add('open');
 }
 async function saveLive(){
@@ -2075,7 +2150,7 @@ async function saveLive(){
   let ok=0;const failed=new Set();
   for(const r of rows){
     const t=liveTotals(r.id);
-    const data={date:live.date,name:r.name,pos:r.pos,att:t.att,attS:t.attS,attE:t.attE,srvA:t.srvA,srvE:t.srvE,rcvS:0,rcvE:t.rcvE,rcvOk:t.rcvOk,rcvAtt:t.rcvAtt,digAtt:t.digAtt,digOk:t.digOk,blkOk:t.blkOk,errT:t.attE+t.srvE+t.rcvE+t.errP,errP:t.errP,note:null,memo};
+    const data={date:live.date,name:r.name,pos:r.pos,att:t.att,attS:t.attS,attE:t.attE,srvA:t.srvA,srvE:t.srvE,rcvS:0,rcvE:t.rcvE,rcvOk:t.rcvOk,rcvAtt:t.rcvAtt,digAtt:t.digAtt,digOk:t.digOk,blkAtt:t.blkAtt,blkOk:t.blkOk,blkErr:t.blkErr,errT:t.attE+t.srvE+t.rcvE+t.errP,errP:t.errP,note:null,memo};
     if(type==='training'){data.month=parseInt(live.date.slice(5,7));}
     else{data.opp=live.opp;data.result=result;}
     const {data:newId,error}=await callWriteRpc(fnName,{p_team_id:TEAM_ID,p_payload:data});
@@ -2097,5 +2172,108 @@ async function saveLive(){
 }
 loadAll();
 </script>
+<script>
+/* 공지(확성기) — 목록은 누구나, 작성/수정/삭제는 운영자 코드가 있어야 가능 (주소 뒤에 ?admin=1) */
+(function(){
+  const ADMIN = /[?&]admin=1(&|$)/.test(location.search);
+  const SEEN_KEY='ann_seen_v1', CODE_KEY='ann_admin_code';
+  const TAGS={new:'신규',improve:'개선',fix:'수정',notice:'안내'};
+  let items=[], loaded=false, editId=null;
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const linkify=s=>esc(s).replace(/(https?:\/\/[^\s<]+)/g,u=>'<a href="'+u+'" target="_blank" rel="noopener noreferrer">'+u+'</a>');
+  const fmt=d=>{const x=new Date(d);return isNaN(x)?'':x.getFullYear()+'.'+String(x.getMonth()+1).padStart(2,'0')+'.'+String(x.getDate()).padStart(2,'0')};
+  const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+  const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+  const ssGet=k=>{try{return sessionStorage.getItem(k)}catch(e){return null}};
+  const ssSet=(k,v)=>{try{sessionStorage.setItem(k,v)}catch(e){}};
+  const latest=()=>items.reduce((m,a)=>a.created_at>m?a.created_at:m,'');
+  function paintDot(){
+    const b=$('ann-btn');if(!b)return;
+    const seen=lsGet(SEEN_KEY)||'';
+    b.classList.toggle('unread',items.length>0&&latest()>seen);
+  }
+  async function load(){
+    try{
+      const {data,error}=await sb.rpc('get_announcements');
+      if(error)throw error;
+      items=Array.isArray(data)?data:[];loaded=true;
+      $('ann-btn').classList.add('on'); // 공지 SQL이 없으면(에러) 버튼 자체를 숨김
+      paintDot();
+    }catch(e){
+      if(ADMIN){$('ann-btn').classList.add('on');}
+    }
+  }
+  function renderList(){
+    const el=$('ann-list');
+    if(!items.length){el.innerHTML='<div class="ann-empty">아직 공지가 없어요.</div>';return;}
+    el.innerHTML=items.map(a=>'<div class="ann-item">'
+      +'<div class="ann-meta"><span class="ann-chip '+esc(a.tag)+'">'+esc(TAGS[a.tag]||'안내')+'</span>'
+      +(a.pinned?'<span class="ann-pin">고정</span>':'')+'<span>'+fmt(a.created_at)+'</span></div>'
+      +'<div class="ann-title">'+esc(a.title)+'</div>'
+      +(a.body?'<div class="ann-body">'+linkify(a.body)+'</div>':'')
+      +(ADMIN?'<div class="ann-act"><button type="button" onclick="annEdit(\''+esc(a.id)+'\')">수정</button><button type="button" class="del" onclick="annDel(\''+esc(a.id)+'\')">삭제</button></div>':'')
+      +'</div>').join('');
+  }
+  function renderAdmin(){
+    const box=$('ann-adm');
+    if(!ADMIN){box.style.display='none';return;}
+    box.style.display='block';
+    const code=ssGet(CODE_KEY);
+    if(!code){
+      box.innerHTML='<h4>운영자 확인</h4><input type="password" id="ann-code" placeholder="운영자 코드" autocomplete="off"><button type="button" class="ann-go" onclick="annLogin()">확인</button>';
+      return;
+    }
+    const e=editId?items.find(x=>x.id===editId):null;
+    box.innerHTML='<h4>'+(e?'공지 수정':'새 공지 쓰기')+'</h4>'
+      +'<input type="text" id="ann-t" maxlength="80" placeholder="제목 (예: 블로킹 기록이 추가됐어요)" value="'+esc(e?e.title:'')+'">'
+      +'<textarea id="ann-b" placeholder="내용 (줄바꿈 그대로 보여요)">'+esc(e?e.body:'')+'</textarea>'
+      +'<div class="ann-row"><select id="ann-tag">'+Object.keys(TAGS).map(k=>'<option value="'+k+'"'+((e?e.tag:'new')===k?' selected':'')+'>'+TAGS[k]+'</option>').join('')+'</select>'
+      +'<label><input type="checkbox" id="ann-pin"'+(e&&e.pinned?' checked':'')+'> 맨 위 고정</label></div>'
+      +'<button type="button" class="ann-go" id="ann-save" onclick="annSave()">'+(e?'수정 저장':'공지 올리기')+'</button>'
+      +(e?'<button type="button" class="ann-sm cancel" onclick="annCancel()">수정 취소</button>':'');
+  }
+  window.annOpen=async function(){
+    $('ann-ov').classList.add('open');
+    document.body.style.overflow='hidden';
+    await load();renderList();renderAdmin();
+    lsSet(SEEN_KEY,latest());paintDot();
+  };
+  window.annClose=function(){$('ann-ov').classList.remove('open');document.body.style.overflow='';};
+  window.annLogin=async function(){
+    const c=$('ann-code').value;if(!c)return;
+    const {data,error}=await sb.rpc('verify_site_admin',{p_code:c});
+    if(error||!data){toast('운영자 코드가 올바르지 않아요.','error');return;}
+    ssSet(CODE_KEY,c);renderAdmin();
+  };
+  window.annEdit=function(id){editId=id;renderAdmin();const a=$('ann-adm');a.scrollIntoView&&a.scrollIntoView({block:'nearest'});};
+  window.annCancel=function(){editId=null;renderAdmin();};
+  window.annSave=async function(){
+    const code=ssGet(CODE_KEY);
+    const title=$('ann-t').value.trim();
+    if(!title){toast('제목을 입력하세요.','error');return;}
+    const body=$('ann-b').value, tag=$('ann-tag').value, pin=$('ann-pin').checked;
+    const btn=$('ann-save');btn.disabled=true;
+    const r=editId
+      ?await sb.rpc('update_announcement',{p_code:code,p_id:editId,p_title:title,p_body:body,p_tag:tag,p_pinned:pin})
+      :await sb.rpc('add_announcement',{p_code:code,p_title:title,p_body:body,p_tag:tag,p_pinned:pin});
+    btn.disabled=false;
+    if(r.error){toast('저장 실패: '+r.error.message,'error');if(/운영자 코드/.test(r.error.message)){try{sessionStorage.removeItem(CODE_KEY)}catch(e){}renderAdmin();}return;}
+    toast(editId?'공지를 수정했어요.':'공지를 올렸어요.','success');
+    editId=null;await load();renderList();renderAdmin();lsSet(SEEN_KEY,latest());paintDot();
+  };
+  window.annDel=async function(id){
+    if(!confirm('이 공지를 삭제할까요?'))return;
+    const {error}=await sb.rpc('delete_announcement',{p_code:ssGet(CODE_KEY),p_id:id});
+    if(error){toast('삭제 실패: '+error.message,'error');return;}
+    toast('삭제했어요.','success');
+    if(editId===id)editId=null;
+    await load();renderList();renderAdmin();paintDot();
+  };
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('ann-ov').classList.contains('open'))annClose();});
+  load();
+})();
+</script>
+
 </body>
 </html>
